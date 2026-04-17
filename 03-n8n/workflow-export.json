@@ -1,0 +1,2590 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Edit Fields4').item.json.messages }}",
+        "options": {
+          "systemMessage": "={{ $json.prompt }}"
+        }
+      },
+      "id": "541908f1-d976-46db-b286-f56268b5115a",
+      "name": "agente_refeicao",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        4080,
+        16
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "09db48f1-b99e-4760-8a9b-10944a1ce0d2",
+              "name": "texto",
+              "value": "={{ $json.texto }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f6e9d806-5401-4a4d-ae03-9bf642312aab",
+      "name": "edit2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2208,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2f8e1fbf-9134-4b48-be29-066509e021f5",
+              "name": "telefone",
+              "value": "={{ $('camposIniciais').item.json.meta.telefoneCliente }}",
+              "type": "string"
+            },
+            {
+              "id": "60d6b895-fea6-4d7f-932a-b8771c97242e",
+              "name": "WhatsAppApp",
+              "value": "={{ $json.mensagem_tipo?.body?.data?.message?.conversation || $json.texto || '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fb0f02fa-fa81-448b-b05d-366306f4e33b",
+      "name": "Filtra Webhook",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2384,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 4
+      },
+      "id": "11d9e3c2-f7ba-487e-a142-1d8c33cfcf13",
+      "name": "Wait",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2736,
+        96
+      ],
+      "webhookId": "e061b007-1b91-4de7-b2a8-75e3b321aaa3"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "propertyName": "mensagem",
+        "key": "={{ $json.telefone }}",
+        "options": {}
+      },
+      "id": "102105bc-df86-4ecd-8564-28f06220ca37",
+      "name": "Puxar as Mensagens",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2560,
+        288
+      ],
+      "credentials": {
+        "redis": {
+          "id": "NaIRTrJ0cQKXgao5",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "9e9b4155-e399-4936-a5db-2d79c8cb871f",
+              "leftValue": "={{ $json.mensagem.last() }}",
+              "rightValue": "={{ $('Filtra Webhook').item.json.Audio || $('Filtra Webhook').item.json.WhatsWeb || $('Filtra Webhook').item.json.WhatsAppApp || $('Filtra Webhook').item.json.Imagem }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8ea78ed2-8723-4e8d-8f40-6e409a0200b0",
+      "name": "If1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2752,
+        288
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "8c7b5845-dbad-4d5f-8234-e4638be61426",
+      "name": "No Operation, do nothing",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2960,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ $json.telefone }}"
+      },
+      "id": "9dc0fcf7-0473-4674-b24e-173247a05c2e",
+      "name": "Redis",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        3136,
+        32
+      ],
+      "credentials": {
+        "redis": {
+          "id": "NaIRTrJ0cQKXgao5",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "push",
+        "list": "={{ $json.telefone }}",
+        "messageData": "={{ $json.Audio || $json.WhatsWeb || $json.WhatsAppApp || $json.Imagem || $json.mensagem}}",
+        "tail": true
+      },
+      "id": "48687afb-f2f3-4cf3-8d7b-4bd63341ba5d",
+      "name": "Lista Mensagens1",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2560,
+        96
+      ],
+      "credentials": {
+        "redis": {
+          "id": "NaIRTrJ0cQKXgao5",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "usuarios",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "telefone",
+              "keyValue": "={{ $json.phone_cliente_canonical || $json.phone_cliente_canonical_e164}}@s.whatsapp.net"
+            }
+          ]
+        }
+      },
+      "alwaysOutputData": true,
+      "id": "6fb73d48-2773-4425-a618-ae67380d8ceb",
+      "name": "getClient",
+      "position": [
+        688,
+        272
+      ],
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "executeOnce": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "zjMLKgrn79rcTLZk",
+          "name": "Alimentaai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "50c6e2b0-2494-4780-abd8-84a0e4213091",
+                    "leftValue": "={{ $('camposIniciais').item.json.content.tipoMensagem }}",
+                    "rightValue": "Conversation",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "texto"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('camposIniciais').item.json.content.tipoMensagem }}",
+                    "rightValue": "AudioMessage",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "c12374d4-bf31-482a-8c6d-0ea3ca45a1f0"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "audio"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "6e892cc1-e196-4942-ba34-3f6250fc76c2",
+                    "leftValue": "={{ $('camposIniciais').item.json.content.tipoMensagem }}",
+                    "rightValue": "ImageMessage",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "imagem"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e1e4f133-305b-43dc-84dc-057e40488033",
+      "name": "mensagem_tipo",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1008,
+        192
+      ],
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bce70488-3d4e-412d-9c28-4858906bc722",
+              "name": "texto",
+              "value": "={{ $('Puxar as Mensagens').item.json.mensagem.join('\\n') }}",
+              "type": "string"
+            },
+            {
+              "id": "abca95c7-60a4-474b-95ed-a22557fa8af7",
+              "name": "telefone",
+              "value": "={{ $('Wait').item.json.telefone }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "797ef5a8-ebaa-4f12-a755-5ddf617797b9",
+      "name": "Edit Fields3",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2960,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a24de86b-b866-4717-9411-2f0cb14e82ac",
+              "name": "messages",
+              "value": "={{ $json.texto }}",
+              "type": "string"
+            },
+            {
+              "id": "11f15b5f-4164-47e4-8086-e43b84bb368e",
+              "name": "telefone",
+              "value": "={{ $json.telefone }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1855131f-d8a3-437e-b018-f1e3226c336b",
+      "name": "Edit Fields4",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3152,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1e66db0-00dc-481d-951c-1fde558e268e",
+              "name": "text",
+              "value": "={{ $json.output.split('\\n\\n') }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "67f0309a-70eb-4999-a689-bd61e4226133",
+      "name": "Edit Fields5",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4528,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "e479fbff-090a-46e3-b4b6-e226aa7009b7",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        4912,
+        208
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "0997364e-1d18-429d-b0b0-ffb1caeace33",
+      "name": "Replace Me",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        5120,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "id": "4a630d66-5338-4784-a35a-0fc7a8e8947c",
+      "name": "Wait1",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        5120,
+        288
+      ],
+      "webhookId": "99105d5c-1c03-4ef5-9352-fa9569beab37"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "text",
+        "options": {}
+      },
+      "id": "ac4cd0cd-343f-4f46-b21c-f0337b3a6ccc",
+      "name": "Split Out",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        4736,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## FLUXO PRINCIPAL\n\n",
+        "height": 528,
+        "width": 5184,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        320,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "15e2a3f9-3dcd-43a7-a7c0-b667a73924ad",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('getClient').item.json.id }}_nutriAi",
+        "tableName": "n8n_chat_histories_nutriAI",
+        "contextWindowLength": 6
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        4144,
+        176
+      ],
+      "id": "3ba00d23-95e2-4bd4-9b3c-25279695c156",
+      "name": "Postgres Chat Memory1",
+      "credentials": {
+        "postgres": {
+          "id": "VDfyl1PBA9RSvhJA",
+          "name": "Alimentaai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7066ff08-1370-464f-a588-86aa37025523",
+              "name": "texto",
+              "value": "={{ $('camposIniciais').item.json.content.mensagem }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5ee641c8-a964-4fc3-bcd4-84b2a1131a90",
+      "name": "edit",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2000,
+        32
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e1fdbe70-0c0e-46a1-accd-a79f4fd17098",
+              "name": "texto",
+              "value": "={{ $('Analyze image1').item.json.content.parts[0].text }}",
+              "type": "string"
+            },
+            {
+              "id": "15ad5e18-bbb1-4686-8bf1-5c45b0b075fd",
+              "name": "caption",
+              "value": "=<captin>{{ $('Webhook').item.json.body.data.message.imageMessage.caption }}</captin>",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "42c35f09-4425-4822-b4ce-0945cf56f8ed",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1984,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7066ff08-1370-464f-a588-86aa37025523",
+              "name": "texto",
+              "value": "={{ $('Obter m dia em base').item.json.transcription }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7ca21b64-1fb4-4020-97f0-a81a0eff83eb",
+      "name": "edit3",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1984,
+        192
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "usuarios",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $('Webhook1').item.json.body.user_id }}"
+            }
+          ]
+        }
+      },
+      "alwaysOutputData": true,
+      "id": "eeda770a-ecb2-45e1-9107-3efea18dfa12",
+      "name": "getClient1",
+      "position": [
+        544,
+        640
+      ],
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "executeOnce": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "zjMLKgrn79rcTLZk",
+          "name": "Alimentaai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://alimentaai.uazapi.com/send/text",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "[REDACTED_INSTANCE_TOKEN]"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $json.phone_variants[0] }}@s.whatsapp.net"
+            },
+            {
+              "name": "text",
+              "value": "=👋 Oi {{ $json.nome }}!  \nSeja bem-vindo ao AlimentaAI 😄  \n\nAqui você pode *mandar foto, áudio ou mensagem* dizendo o que comeu — e eu analiso tudo pra você 🍽️  \nQuer testar agora? Manda o que comeu na última refeição pra eu te mostrar como funciona.\n"
+            },
+            {
+              "name": "dalay",
+              "value": "={{ Number(2000) }}"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "id": "87474e03-11a4-43a6-b98a-abc10e9b8c15",
+      "name": "Responde texto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1472,
+        576
+      ],
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "messages": {
+          "messageValues": [
+            {
+              "type": "ai",
+              "message": "={{ $json.text }}"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryManager",
+      "typeVersion": 1.1,
+      "position": [
+        1648,
+        576
+      ],
+      "id": "44c0c33b-03ff-4237-9634-6463d0153f79",
+      "name": "Chat Memory Manager"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('getClient1').item.json.id }}_nutriAi",
+        "tableName": "n8n_chat_histories_nutriai",
+        "contextWindowLength": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        1744,
+        704
+      ],
+      "id": "af7c0e28-8aa8-487c-834e-3d964fd79c0e",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "VDfyl1PBA9RSvhJA",
+          "name": "Alimentaai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cadastro_feito",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        368,
+        592
+      ],
+      "id": "595a5ea2-88a5-4c94-b152-ee93d8ce5545",
+      "name": "Webhook1",
+      "webhookId": "94847ef9-44ce-499f-9219-42f6867ece75"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n Function node — normalizador BR (E.164-like: 55 + DDD + número)\n\nfunction pickRoot(json) {\n  // Suporta payload vindo como array [{...}] ou objeto simples {...}\n  if (Array.isArray(json) && json.length > 0) return json[0];\n  return json;\n}\n\nfunction digitsOnly(str) {\n  return String(str || '').replace(/\\D/g, '');\n}\n\nfunction normalizeFromJid(jidOrNumber) {\n  // 1) Tira sufixo @... se for JID e mantém só dígitos\n  let raw = String(jidOrNumber || '').split('@')[0];\n  let d = digitsOnly(raw);\n\n  // 2) Garante country code 55 (remove zeros à esquerda do restante)\n  if (!d.startsWith('55')) {\n    d = '55' + d.replace(/^0+/, '');\n  }\n\n  // 3) Particiona: 55 + DDD(2) + local(8 ou 9)\n  const cc = d.slice(0, 2);   // 55\n  const ddd = d.slice(2, 4);  // ex: 51\n  const local = d.slice(4);   // ex: 82892465 ou 982892465\n\n  let with9 = null;\n  let without9 = null;\n\n  if (local.length === 8) {\n    // Celular digitado sem 9\n    without9 = cc + ddd + local;\n    with9    = cc + ddd + '9' + local;   // canônico\n  } else if (local.length === 9) {\n    if (local.startsWith('9')) {\n      with9    = cc + ddd + local;       // já canônico\n      without9 = cc + ddd + local.slice(1);\n    } else {\n      // Caso atípico (fixo 9 dígitos) — não inventar 9\n      with9 = without9 = cc + ddd + local;\n    }\n  } else {\n    // Comprimento inesperado — devolve como veio\n    with9 = without9 = d;\n  }\n\n  const variants = Array.from(new Set([with9, without9].filter(Boolean)));\n  const canonical = with9 || d; // Preferimos COM 9 quando existir\n\n  return {\n    input_raw: String(jidOrNumber || ''),\n    cc,\n    ddd,\n    local,\n    canonical,           // ex: 5551982892465\n    canonical_e164: '+' + canonical,\n    variants,            // ex: [\"5551982892465\",\"555182892465\"]\n  };\n}\n\n// -------- Execução --------\nconst root = pickRoot($json);\n\nconst telCliente = root?.meta?.telefoneCliente;\nconst telEmpresa = root?.meta?.telefoneEmpresa;\n\nconst cliente = normalizeFromJid(telCliente);\nconst empresa = normalizeFromJid(telEmpresa);\n\nreturn [{\n  // Cliente\n  phone_cliente_canonical: cliente.canonical,\n  phone_cliente_canonical_e164: cliente.canonical_e164,\n  phone_cliente_variants: cliente.variants,\n  phone_cliente_cc: cliente.cc,\n  phone_cliente_ddd: cliente.ddd,\n  phone_cliente_local: cliente.local,\n\n  // Empresa (se precisar)\n  phone_empresa_canonical: empresa.canonical,\n  phone_empresa_canonical_e164: empresa.canonical_e164,\n  phone_empresa_variants: empresa.variants,\n\n  // Eco útil\n  nome_cliente: root?.meta?.nomeCliente,\n  mensagem: root?.content?.mensagem,\n  tipo_mensagem: root?.content?.tipoMensagem,\n  id_mensagem: root?.content?.idMensagem,\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        272
+      ],
+      "id": "0f5fd508-d4be-4705-bc16-fa28b2a0e680",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "base64",
+        "options": {}
+      },
+      "id": "64e10096-b7df-4b8c-be53-a4a469ac57b7",
+      "name": "Convert to File2",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1648,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f553042c-39d5-4bdd-8082-fbd390726fcd",
+              "name": "base64",
+              "value": "={{ $json.base64Data }}",
+              "type": "string"
+            },
+            {
+              "id": "99bfd97a-4868-47ad-bba4-54b3ff1df3bf",
+              "name": "prompt",
+              "value": "=<caption>{{ $json.transcription }}</caption>\n\n### **📍 Papel**\n\nVocê é um agente especializado em visão computacional da plataforma **AlimentaAI**. Seu objetivo é **analisar imagens de pratos de comida**, identificar os alimentos presentes e estimar a quantidade aproximada em gramas de cada um.\n\n---\n\n### **🛠 Habilidades**\n\n* **Identificar Alimentos:** Reconhecer e nomear todos os ingredientes visíveis em um prato na imagem.\n* **Estimar Porções:** Avaliar a quantidade de cada alimento em gramas, considerando um prato de tamanho padrão como referência visual.\n* **Estruturar a Resposta:** Organizar a análise em formato claro, listando cada alimento com sua porção estimada.\n\n---\n\n### **⚙ Regras de Ação**\n\n1. **Análise Detalhada:** Analise a imagem e identifique todos os alimentos presentes.\n2. **Quantificação:** Para cada alimento identificado, estime sua porção em gramas.\n3. **Use a caption:** Use o conteúdo da tag `<caption></caption>` como contexto auxiliar para ajudar na identificação dos alimentos.\n4. **Formato de Saída:** A resposta final deve ser formatada dentro de uma tag `<imagem> ... </imagem>`.\n5. **Exclusividade:** Sua única tarefa é identificar alimentos e estimar porções. **Não calcule macronutrientes, calorias ou qualquer valor nutricional.** Essa responsabilidade é de outro agente.\n\n---\n\n### **Exemplo de Saída**\n\n<imagem>\n- Arroz branco — aproximadamente 150g\n- Feijão carioca — aproximadamente 80g\n- Peito de frango grelhado — aproximadamente 120g\n- Salada de alface e tomate — aproximadamente 60g\n- Farofa — aproximadamente 30g\n</imagem>\n\n---\n\n### **🔒 Restrições**\n\n* **Não calcule** proteína, carboidrato, gordura ou calorias.\n* Não responda diretamente ao usuário.\n* Não inclua saudações, despedidas ou qualquer texto fora da tag `<imagem>`.\n* Não adicione a legenda (`<caption>`) na saída.\n* Não faça suposições sobre temperos ou métodos de preparo que não sejam visíveis (ex: não suponha que a batata é frita se ela parece cozida).\n* Responda **apenas** com a lista de alimentos e suas porções estimadas.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d67b924d-ceb7-41fe-bf71-480189fcb69e",
+      "name": "base",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1488,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "text": "={{ $('base').item.json.prompt }}",
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        1824,
+        352
+      ],
+      "id": "9a91b923-1d2e-42e2-9599-1fec3f2112e9",
+      "name": "Analyze image1",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "qHM2tKH4uri208IE",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## EXCLUI BANCO",
+        "height": 206,
+        "width": 356,
+        "color": 3
+      },
+      "id": "0e6276d8-3a66-462b-806a-640c67bb445a",
+      "name": "Sticky Note6",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2240,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "555182892465@s.whatsapp.net_block"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        2464,
+        592
+      ],
+      "id": "90821e31-394e-4296-9acd-0276ee497740",
+      "name": "Redis3",
+      "credentials": {
+        "redis": {
+          "id": "NaIRTrJ0cQKXgao5",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "deleteTable",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "n8n_chat_histories_nutriai",
+          "mode": "list",
+          "cachedResultName": "n8n_chat_histories_nutriai"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        2272,
+        592
+      ],
+      "id": "b24ace78-61fc-4913-9434-c81df7bce786",
+      "name": "apaga_nutriAI",
+      "credentials": {
+        "postgres": {
+          "id": "VDfyl1PBA9RSvhJA",
+          "name": "Alimentaai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n Function node — normalizador BR (E.164-like) + mapeamento do novo payload\nfunction pickRoot(json) {\n  // Suporta payload vindo como array [{...}] ou objeto simples {...}\n  if (Array.isArray(json) && json.length > 0) return json[0];\n  return json || {};\n}\n\nfunction digitsOnly(str) {\n  return String(str || '').replace(/\\D/g, '');\n}\n\nfunction normalizeFromJid(jidOrNumber) {\n  if (!jidOrNumber) {\n    return {\n      input_raw: '',\n      cc: null, ddd: null, local: null,\n      canonical: null, canonical_e164: null, variants: []\n    };\n  }\n\n  // 1) Tira sufixo @... se for JID e mantém só dígitos\n  let raw = String(jidOrNumber || '').split('@')[0];\n  let d = digitsOnly(raw);\n\n  // 2) Garante country code 55 (remove zeros à esquerda do restante)\n  if (!d.startsWith('55')) {\n    d = '55' + d.replace(/^0+/, '');\n  }\n\n  // Dados mínimos: 55 + DDD(2) + local(8 ou 9) => pelo menos 12 dígitos\n  if (d.length < 12) {\n    return {\n      input_raw: String(jidOrNumber || ''),\n      cc: '55',\n      ddd: null,\n      local: null,\n      canonical: d || null,\n      canonical_e164: d ? '+' + d : null,\n      variants: d ? [d] : []\n    };\n  }\n\n  // 3) Particiona: 55 + DDD(2) + local\n  const cc = d.slice(0, 2);   // 55\n  const ddd = d.slice(2, 4);  // ex: 54\n  const local = d.slice(4);   // ex: 999337424 ou 99337424\n\n  let with9 = null;\n  let without9 = null;\n\n  if (local.length === 8) {\n    // Celular digitado sem 9\n    without9 = cc + ddd + local;\n    with9    = cc + ddd + '9' + local;   // canônico\n  } else if (local.length === 9) {\n    if (local.startsWith('9')) {\n      with9    = cc + ddd + local;       // já canônico\n      without9 = cc + ddd + local.slice(1);\n    } else {\n      // Caso atípico (fixo 9 dígitos) — não inventar 9\n      with9 = without9 = cc + ddd + local;\n    }\n  } else {\n    // Comprimento inesperado — devolve como veio\n    with9 = without9 = d;\n  }\n\n  const variants = Array.from(new Set([with9, without9].filter(Boolean)));\n  const canonical = with9 || d; // Preferimos COM 9 quando existir\n\n  return {\n    input_raw: String(jidOrNumber || ''),\n    cc,\n    ddd,\n    local,\n    canonical,                 // ex: 5554999337424\n    canonical_e164: '+' + canonical,\n    variants,                  // ex: [\"5554999337424\",\"555499933742\"]\n  };\n}\n\nfunction parseHorarios(strOrArr) {\n  if (Array.isArray(strOrArr)) return strOrArr;\n  if (typeof strOrArr === 'string' && strOrArr.trim()) {\n    try {\n      const parsed = JSON.parse(strOrArr);\n      return Array.isArray(parsed) ? parsed : [];\n    } catch (e) {\n      return [];\n    }\n  }\n  return [];\n}\n\n// -------- Execução --------\n// 1) Pega itens do nó getClient1 (se existir). Caso contrário, usa os itens que chegaram neste Function.\nconst fromGetClient = $items('getClient1', 0, 0); // pode retornar [] se o nó não existir nesse branch\nconst sourceItems = (fromGetClient && fromGetClient.length > 0)\n  ? fromGetClient.map(i => i.json)\n  : items.map(i => i.json); // fallback para os itens atuais\n\n// 2) Processa TODOS os itens e retorna 1 saída por usuário\nconst out = sourceItems.map((src) => {\n  const root = pickRoot(src);\n\n  // Telefone agora vem em root.telefone (ex: \"5554999337424@s.whatsapp.net\")\n  const telJid = root?.telefone;\n  const pessoa = normalizeFromJid(telJid);\n\n  // Parse seguro dos horários de refeições\n  const horariosArray = parseHorarios(root?.horarios_refeicoes);\n\n  return {\n    json: {\n      // Normalização do telefone\n      telefone_jid: telJid || null,\n      phone_canonical: pessoa.canonical,\n      phone_canonical_e164: pessoa.canonical_e164,\n      phone_variants: pessoa.variants,\n      phone_cc: pessoa.cc,\n      phone_ddd: pessoa.ddd,\n      phone_local: pessoa.local,\n\n      // Campos do payload original (eco para downstream)\n      id: root?.id ?? null,\n      nome: root?.nome ?? null,\n      sexo: root?.sexo ?? null,\n      altura_cm: root?.altura_cm ?? null,\n      peso_atual_kg: root?.peso_atual_kg ?? null,\n      nivel_atividade: root?.nivel_atividade ?? null,\n      objetivo: root?.objetivo ?? null,\n      restricoes: Array.isArray(root?.restricoes) ? root.restricoes : [],\n      modo_macros: root?.modo_macros ?? null,\n      data_criacao: root?.data_criacao ?? null,\n      tem_macros: !!root?.tem_macros,\n      idade: root?.idade ?? null,\n      refeicoes: root?.refeicoes ?? null,\n      horarios_refeicoes: horariosArray,                 // sempre array\n      horarios_refeicoes_raw: root?.horarios_refeicoes ?? null, // original\n      idmensagem: root?.idmensagem ?? null,\n      session_id: root?.session_id ?? null,\n    }\n  };\n});\n\nreturn out;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1312,
+        576
+      ],
+      "id": "65f566b5-6aaf-4afe-b7d4-4b9ec5fdbe13",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "1708e209-5af3-4cd5-a1bf-ea2363a7d8ee",
+                    "leftValue": "={{ $('getClient').item.json.id }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notExists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Não Cadastrado"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "69ef85de-d114-4166-ba95-60f00e7f5957",
+                    "leftValue": "={{ new Date($('getSubscribe').item.json.current_period_end).getTime() > new Date().getTime() }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Active"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "08891f2d-d83c-4a8d-84f1-9b079d50d299",
+                    "leftValue": "={{ new Date().getTime() >= new Date($('getClient').item.json.data_criacao).getTime() + (7 * 24 * 60 * 60 * 1000) }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "false",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Trial"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        3312,
+        192
+      ],
+      "id": "5c20c71d-e160-44e1-bb4b-74404cb16b4b",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a9cd6dfc-23c9-4bbc-95bc-54a40deafe38",
+              "name": "prompt",
+              "value": "=## Data atual: {{ (() => {\nconst date = new Date();\nconst brDate = new Date(date.toLocaleString(\"en-US\", { timeZone: \"America/Sao_Paulo\" }));\n\nconst days = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];\nconst pad = n => n.toString().padStart(2,'0');\n\nreturn `${days[brDate.getDay()]}, ${brDate.getFullYear()}-${pad(brDate.getMonth()+1)}-${pad(brDate.getDate())} ${pad(brDate.getHours())}:${pad(brDate.getMinutes())}:${pad(brDate.getSeconds())}`;\n})() }}\n\n---\n\n## 🤖 Quem Você É\n\nVocê é o **AlimentaAI** — um assistente nutricional por WhatsApp que analisa refeições e calcula macronutrientes. Você está no modo **Teste Gratuito (TBF)**: o usuário ainda NÃO é assinante. Seu trabalho é entregar valor imediato (análise nutricional precisa) e, no momento certo, convidá-lo para o trial de 7 dias grátis.\n\n---\n\n## 🎯 Seus 2 Objetivos (nesta ordem de prioridade)\n\n### OBJETIVO 1: Calcular Macros da Refeição\nAnalisar o que o usuário comeu (texto ,foto ou audio) e retornar os macronutrientes com precisão.\n\n### OBJETIVO 2: Converter para o Trial de 7 Dias Grátis\nApós entregar o valor (análise nutricional), apresentar o CTA para o trial de forma natural e persuasiva.\n\n---\n\n## 📋 Fluxo de Interação\n\n### Etapa 1 — Receber e Analisar a Refeição\n\n**Quando o usuário descreve o que comeu (texto):**\n\n1. Se houver ambiguidade (ex: \"comi pão\" — francês? integral? de forma?), pergunte ANTES de calcular\n2. Consulte a **Tabela Nutricional de Referência** abaixo para estimar macros\n3. Se o alimento NÃO estiver na tabela, chame `buscar_alimento_taco`\n4. Se a tool não retornar resultados, use conhecimento geral (TACO/USDA) com porções médias brasileiras\n5. Aplique as **Porções Médias de Referência** quando o usuário não especificar quantidade\n6. Valide o total com a fórmula: **kcal = (proteína × 4) + (carboidrato × 4) + (gordura × 9)**\n\n**Quando o usuário envia foto (`<imagem>` ou `<caption>`):**\n\n1. Analise a descrição que veio na tag `<imagem>`\n2. Use a `<caption>` como contexto adicional se disponível\n3. Calcule os macros usando a Tabela de Referência / `buscar_alimento_taco`\n4. Apresente a análise\n\n**Formato de resposta (SEMPRE):**\n[Comentário breve e amigável sobre o prato — máx 1 linha]\n\n🥩 Proteína: Xg\n🍞 Carboidrato: Xg\n🥑 Gordura: Xg\n🔥 Total: X kcal\n\n\n\n---\n\n### Etapa 2 — CTA para o Trial de 7 Dias\n\n**Antes de enviar qualquer CTA**, chame a tool `marcar_tbf_concluido` para registrar que a interação TBF foi completada (seta `tbf_completed = true` na tabela `tbf_interactions`). Somente após a confirmação da tool, envie o CTA.\n\n**Imediatamente após a análise nutricional**, adicione o CTA. Varie a abordagem conforme o número de interações:\n\n---\n\n**1ª interação (primeira análise do usuário):**\nCurtiu a análise? Isso é só uma amostra! 🚀\n\nNo AlimentaAI completo você pode:\n✅ Registrar todas as refeições do dia\n✅ Acompanhar seus macros em tempo real\n✅ Receber sugestões personalizadas\n\n**QUERO_BOTAO_TESTE**\n\n---\n\n**2ª interação (se voltou mas ainda não assinou):**\nTá vendo como é prático? 😄\n\nImagina ter isso pra TODAS as suas refeições, com metas personalizadas e acompanhamento diário.\n\n**QUERO_BOTAO_TESTE**\n\n---\n\n**3ª interação em diante:**\n💡 Dica: no plano completo, eu registro tudo e te mostro quanto falta pra bater sua meta do dia. Só 7 dias grátis pra experimentar:\n\n**QUERO_BOTAO_TESTE**\n\n---\n\n### Quando o Usuário Pergunta Algo Fora do Escopo\n\n**Se perguntar sobre funcionalidades do plano completo** (registrar refeição, progresso, cardápio, metas, sugestões):\nEssa funcionalidade faz parte do AlimentaAI completo! 🔓\n\nAqui no teste gratuito eu analiso suas refeições e calculo os macros. Pra registrar, acompanhar metas e receber cardápios, é só ativar o trial:\n\n**QUERO_BOTAO_TESTE**\n\n7 dias grátis, cadastro rápido! 😉\n\n> ⚠️ Neste caso também chame `marcar_tbf_concluido` antes de enviar a resposta com o link.\n\n**Se o assunto não tem nada a ver com nutrição/alimentação:**\nOpa, eu sou especialista em nutrição! 🍽️\n\nMe manda uma foto do seu prato ou conta o que comeu que eu calculo os macros na hora!\n\n\n\n---\n\n## 🔍 Consulta de Alimentos — Ordem de Prioridade\n\n1. **Tabela de Referência abaixo** → alimentos comuns (~80% dos casos)\n2. **Tool `buscar_alimento_taco`** → quando o alimento NÃO estiver na tabela\n3. **Conhecimento geral (TACO/USDA)** → último recurso\n\n### Nomes regionais (trate como sinônimos, NÃO pergunte):\n- Macaxeira / aipim = mandioca\n- Carne de sol ≈ charque\n- Jerimum = abóbora\n- Bolacha = biscoito\n- Mexerica / bergamota / ponkan = tangerina\n- Cheiro-verde = salsa + cebolinha\n- Couve-manteiga = couve\n\n---\n\n## 🧮 Tabela Nutricional de Referência (por 100g, salvo indicação)\n\n### 🥩 Proteínas\n\n| Alimento | Porção Ref | Prot | Carb | Gord | Kcal |\n|---|---|---|---|---|---|\n| Frango peito s/ pele, grelhado | 100g | 32g | 0g | 3g | 159 |\n| Frango coxa/sobrecoxa, assada | 100g | 26g | 0g | 8g | 178 |\n| Carne bovina patinho, grelhada | 100g | 32g | 0g | 7g | 193 |\n| Carne bovina acém, cozida | 100g | 27g | 0g | 10g | 198 |\n| Carne moída refogada | 100g | 26g | 0g | 11g | 212 |\n| Carne suína lombo, assada | 100g | 29g | 0g | 7g | 181 |\n| Ovo inteiro cozido | 1 un (50g) | 6g | 1g | 5g | 70 |\n| Atum em lata (escorrido) | 100g | 26g | 0g | 1g | 116 |\n| Sardinha em lata (escorrida) | 100g | 25g | 0g | 12g | 210 |\n| Tilápia grelhada | 100g | 26g | 0g | 2g | 128 |\n| Salmão grelhado | 100g | 25g | 0g | 12g | 208 |\n| Camarão cozido | 100g | 24g | 0g | 1g | 105 |\n| Whey protein | 1 scoop (30g) | 24g | 3g | 1g | 120 |\n\n### 🍚 Carboidratos\n\n| Alimento | Porção Ref | Prot | Carb | Gord | Kcal |\n|---|---|---|---|---|---|\n| Arroz branco cozido | 100g | 3g | 28g | 0g | 128 |\n| Arroz integral cozido | 100g | 3g | 25g | 1g | 124 |\n| Feijão carioca cozido | 100g | 5g | 14g | 1g | 76 |\n| Feijão preto cozido | 100g | 5g | 14g | 1g | 77 |\n| Lentilha cozida | 100g | 9g | 16g | 0g | 108 |\n| Macarrão cozido | 100g | 4g | 28g | 1g | 136 |\n| Batata doce cozida | 100g | 1g | 18g | 0g | 77 |\n| Batata inglesa cozida | 100g | 1g | 16g | 0g | 52 |\n| Mandioca cozida | 100g | 1g | 30g | 0g | 125 |\n| Inhame cozido | 100g | 2g | 24g | 0g | 97 |\n| Pão francês | 1 un (50g) | 4g | 30g | 2g | 150 |\n| Pão de forma integral | 1 fatia (25g) | 3g | 12g | 1g | 65 |\n| Tapioca (goma pronta) | 1 un (50g) | 0g | 42g | 0g | 168 |\n| Cuscuz de milho | 100g | 2g | 25g | 0g | 113 |\n| Aveia em flocos | 30g | 4g | 18g | 2g | 105 |\n| Granola | 40g | 3g | 28g | 5g | 168 |\n| Farinha de aveia | 30g | 4g | 20g | 2g | 115 |\n\n### 🍌 Frutas\n\n| Alimento | Porção Ref | Prot | Carb | Gord | Kcal |\n|---|---|---|---|---|---|\n| Banana prata | 1 un (90g) | 1g | 23g | 0g | 90 |\n| Maçã | 1 un (130g) | 0g | 17g | 0g | 70 |\n| Laranja | 1 un (140g) | 1g | 13g | 0g | 54 |\n| Manga | 100g | 1g | 15g | 0g | 64 |\n| Mamão papaia | 100g | 1g | 10g | 0g | 40 |\n| Morango | 100g | 1g | 7g | 0g | 30 |\n| Uva | 100g | 1g | 15g | 0g | 53 |\n| Abacaxi | 100g | 1g | 12g | 0g | 48 |\n| Melancia | 100g | 1g | 8g | 0g | 33 |\n| Abacate | 100g | 1g | 6g | 15g | 160 |\n| Açaí (polpa pura s/ xarope) | 100g | 4g | 6g | 34g | 335 |\n\n### 🥬 Vegetais e Legumes\n\n| Alimento | Porção Ref | Prot | Carb | Gord | Kcal |\n|---|---|---|---|---|---|\n| Brócolis cozido | 100g | 3g | 4g | 0g | 25 |\n| Couve refogada | 100g | 3g | 5g | 2g | 42 |\n| Espinafre cozido | 100g | 3g | 2g | 0g | 18 |\n| Abobrinha cozida | 100g | 1g | 3g | 0g | 15 |\n| Cenoura cozida | 100g | 1g | 7g | 0g | 30 |\n| Beterraba cozida | 100g | 2g | 8g | 0g | 38 |\n| Tomate cru | 100g | 1g | 3g | 0g | 15 |\n| Alface cru | 100g | 1g | 2g | 0g | 11 |\n| Pepino cru | 100g | 1g | 2g | 0g | 10 |\n| Milho verde cozido | 100g | 3g | 19g | 1g | 96 |\n\n### 🥑 Gorduras e Oleaginosas\n\n| Alimento | Porção Ref | Prot | Carb | Gord | Kcal |\n|---|---|---|---|---|---|\n| Azeite de oliva | 1 col sopa (13ml) | 0g | 0g | 14g | 120 |\n| Óleo de coco | 1 col sopa (13ml) | 0g | 0g | 14g | 120 |\n| Manteiga | 1 col sopa (12g) | 0g | 0g | 10g | 86 |\n| Pasta de amendoim | 1 col sopa (20g) | 5g | 4g | 10g | 120 |\n| Castanha-do-pará | 3 un (12g) | 2g | 0g | 8g | 80 |\n| Castanha de caju | 10 un (15g) | 3g | 4g | 7g | 86 |\n| Nozes | 4 metades (12g) | 2g | 1g | 8g | 78 |\n| Amendoim torrado | 30g | 8g | 5g | 15g | 177 |\n| Semente de chia | 1 col sopa (12g) | 2g | 5g | 4g | 58 |\n| Semente de linhaça | 1 col sopa (10g) | 2g | 3g | 3g | 50 |\n\n### 🧀 Laticínios\n\n| Alimento | Porção Ref | Prot | Carb | Gord | Kcal |\n|---|---|---|---|---|---|\n| Leite integral | 200ml | 6g | 10g | 6g | 120 |\n| Leite desnatado | 200ml | 7g | 10g | 0g | 72 |\n| Iogurte natural integral | 170g | 6g | 7g | 5g | 100 |\n| Iogurte grego natural | 100g | 6g | 4g | 5g | 90 |\n| Queijo muçarela | 30g (1 fatia) | 7g | 0g | 6g | 80 |\n| Queijo minas frescal | 30g | 5g | 0g | 4g | 56 |\n| Queijo cottage | 100g | 12g | 3g | 4g | 98 |\n| Requeijão cremoso | 1 col sopa (30g) | 2g | 1g | 6g | 63 |\n| Cream cheese | 1 col sopa (30g) | 2g | 1g | 10g | 99 |\n\n### 🍞 Preparações Comuns (porção típica brasileira)\n\n| Preparação | Porção Ref | Prot | Carb | Gord | Kcal |\n|---|---|---|---|---|---|\n| PF básico (arroz+feijão+frango+salada) | 1 prato | 40g | 55g | 12g | 490 |\n| Marmita fit (arroz int+frango+legumes) | 1 un (~350g) | 35g | 40g | 8g | 370 |\n| Açaí com granola e banana (tigela média) | 300ml | 6g | 65g | 18g | 440 |\n| X-burger simples (pão+carne+queijo) | 1 un | 22g | 30g | 20g | 390 |\n| Pizza calabresa | 1 fatia grande | 12g | 30g | 10g | 260 |\n| Coxinha | 1 un média (~80g) | 8g | 20g | 12g | 220 |\n| Pão de queijo | 1 un média (~40g) | 3g | 15g | 6g | 125 |\n| Tapioca c/ queijo e presunto | 1 un | 10g | 42g | 8g | 280 |\n| Omelete 2 ovos c/ queijo | 1 un | 18g | 2g | 16g | 220 |\n| Vitamina de banana c/ leite (300ml) | 1 copo | 8g | 38g | 7g | 240 |\n| Café com leite (200ml) | 1 xícara | 3g | 5g | 3g | 60 |\n| Suco de laranja natural | 200ml | 1g | 20g | 0g | 84 |\n\n---\n\n## 📏 Porções Médias de Referência (quando o usuário não especificar)\n\n| Alimento | Porção Padrão Assumida |\n|---|---|\n| Arroz | 4 colheres de sopa (100g) |\n| Feijão | 1 concha média (80g) |\n| Frango/carne | 1 filé médio (120g) |\n| Salada | 1 prato de sobremesa (~50g) |\n| Ovo | 1 unidade (50g) |\n| Pão francês | 1 unidade (50g) |\n| Banana | 1 unidade média (90g) |\n| Batata doce | 1 unidade média (130g) |\n| Queijo fatiado | 2 fatias (60g) |\n| Leite | 1 copo (200ml) |\n| Azeite | 1 fio = 1 colher de chá (~5ml) |\n| Pasta de amendoim | 1 colher de sopa (20g) |\n| Macarrão | 1 prato fundo (200g cozido) |\n\n---\n\n## 🔢 Regra de Cálculo de Calorias\n\nSempre valide o total com:\n**kcal = (proteína × 4) + (carboidrato × 4) + (gordura × 9)**\n\nSe a soma não bater, ajuste o total.\n\n---\n\n## 🎨 Regras de Formatação\n\n### ✅ SEMPRE:\n- Seja direto e objetivo (máx 3-4 linhas de texto corrido)\n- Use emojis apenas nos macros e para destaques pontuais\n- Quebre linhas para melhor leitura no WhatsApp\n- Fale de forma natural, como um amigo\n- Arredonde todos os valores nutricionais para inteiros\n\n### ❌ NUNCA:\n- Parágrafos longos\n- Linguagem formal demais\n- Repetir informações\n- Ser prolixo\n- Inventar valores — se não encontrar na tabela e não tiver certeza, pergunte\n\n---\n\n## 📊 Padrão de Macros\n\n**SEMPRE use este formato em lista vertical:**\n🥩 Proteína: Xg\n🍞 Carboidrato: Xg\n🥑 Gordura: Xg\n🔥 Total: X kcal\n\n\n\n**NUNCA use formato inline** (ex: ❌ 🥚 62g • 🍞 130g • 🥑 69g)\n\n---\n\n## 🚫 Limites\n\n- NÃO faça diagnósticos clínicos ou médicos\n- NÃO recomende suplementos ou trate doenças\n- Se pedirem algo assim: \"Isso é melhor conversar com seu nutricionista! 😉\"\n- NÃO registre refeições, NÃO consulte progresso, NÃO monte cardápios — essas funções são do plano completo (use como gancho para o CTA)\n\n---\n\n## 💬 Tom de Voz\n\nConversa de WhatsApp com um amigo que manja de nutrição:\n\n✅ \"Boa escolha! 👏\"\n✅ \"Olha só o que tem nesse prato:\"\n✅ \"Manda a foto que eu calculo!\"\n\n❌ \"Conforme solicitado, realizei a análise...\"\n❌ \"Com base nas informações fornecidas...\"\n❌ \"Gostaria de informar que...\"",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3968,
+        -368
+      ],
+      "id": "09eb01ce-4174-4fdd-93ff-1d2a7d071494",
+      "name": "prompt_nao_cadastrado"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8c6d1589-95ce-4185-9243-f45cd2b21a2f",
+              "name": "prompt",
+              "value": "=Seu unico objetivo é enviar uma mensagem exatamente assim: 'Oi {{ $('getClient').item.json.nome || '👋' }}! 😊  Seu período gratuito de 7 dias do AlimentaAI chegou ao fim.   Mas não se preocupe! Você pode continuar acompanhando sua alimentação, metas e análises automáticas clicando no link abaixo:  👉 [Continuar usando o AlimentaAI] (https://alimend-assist.lovable.app/auth)  Não perca suas informações e o acompanhamento das suas refeições! 💪🍽️'\n\n- Não edite o texto!\n- Não chame nenhuma tool!\n- Siga extritamente unica regra que é enviar o texto solicitado acima!\n\nVocê não deve responder sobre a dieta, calcular macros ou qualquer outra resposta que não seja a orientação para efetuar o cadastro para conseguir usar a ferramenta. ",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3536,
+        336
+      ],
+      "id": "08fa94d2-8101-4b0b-901a-e2ec001a6996",
+      "name": "prompt_trial_expired"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0e4162ed-8896-4c70-88b2-aa74acb5afbe",
+              "name": "prompt",
+              "value": "=## Data atual: {{ (() => {\nconst date = new Date();\nconst brDate = new Date(date.toLocaleString(\"en-US\", { timeZone: \"America/Sao_Paulo\" }));\n\nconst days = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];\nconst pad = n => n.toString().padStart(2,'0');\n\nreturn `${days[brDate.getDay()]}, ${brDate.getFullYear()}-${pad(brDate.getMonth()+1)}-${pad(brDate.getDate())} ${pad(brDate.getHours())}:${pad(brDate.getMinutes())}:${pad(brDate.getSeconds())}`;\n})() }}\n\n---\n\n## 👤 Dados do Usuário\n\n- Nome: {{ $('getClient').item.json.nome || $('camposIniciais').item.json.meta.nomeCliente }}\n- Restrições alimentares: {{ $('getClient').item.json.restricoes || 'Nenhuma informada' }}\n\n---\n\n## ⚠️ Regra Absoluta de Tools\n\nToda ação que exige persistência de dados (registrar, excluir, consultar) **DEVE** chamar a tool correspondente antes de qualquer resposta ao usuário.\n\n- **É proibido** simular, antecipar ou inventar o resultado de uma tool\n- **É proibido** exibir macros, confirmações ou IDs sem antes receber o retorno real da tool\n- Se a tool falhar ou retornar erro, informe o usuário o que aconteceu e não mostre dados fictícios\n- Nunca invente ID, timestamp ou confirmação sem retorno real da tool\n\n---\n\n## 🎯 Como Você Age\n\nAnalise a mensagem e responda de acordo:\n\n### 1️⃣ Registrar Refeição\n**Quando:** usuário conta o que comeu\n\n**Ação:**\n- Consulte a Tabela Nutricional de Referência abaixo para estimar macros\n- Se o alimento NÃO estiver na tabela, use conhecimento geral (TACO/USDA) com porções médias brasileiras\n- Se houver ambiguidade (ex: \"comi pão\" — francês? integral? de forma?), pergunte ANTES de registrar\n- Deduza o tipo_refeicao pelo horário atual: 05h-09h café, 09h-11h lanche manhã, 11h-14h almoço, 14h-17h lanche tarde, 17h-21h jantar, 21h-00h ceia\n- **OBRIGATÓRIO:** chame a tool `registrar_refeicao` com os valores estimados **ANTES** de exibir qualquer confirmação. Nunca mostre os macros sem antes ter chamado a tool com sucesso.\n- Somente após o retorno da tool, confirme de forma breve com os valores retornados\n\n**Exemplo** (exibido APÓS retorno da tool `registrar_refeicao`):\n```\nRegistrado! ✅\n\n🥩 Proteína: 25g\n🍞 Carboidrato: 52g\n🥑 Gordura: 33g\n🔥 Total: 601 kcal\n```\n\n---\n\n### 2️⃣ Consultar Progresso\n**Quando:** usuário pergunta o que já comeu, quanto falta, como está o dia, etc.\n\n**Ação:**\n- **OBRIGATÓRIO:** chame `consultar_refeicao_diario` + `consultar_metas_macros` antes de responder\n- Some os macros de todas as refeições do dia\n- Calcule o restante (meta - consumido)\n- Se restante for negativo em algum macro, avise com ⚠️\n- Mostre consumido e restante\n\n**Exemplo** (exibido APÓS retorno das tools):\n```\n📊 Hoje você já consumiu:\n\n🥩 Proteína: 31g\n🍞 Carboidrato: 53g\n🥑 Gordura: 34g\n🔥 Total: 645 kcal\n\nRestante (meta 190P/160C/52G):\n\n🥩 Proteína: 159g\n🍞 Carboidrato: 107g\n🥑 Gordura: 18g\n🔥 Total: 1221 kcal\n```\n\n---\n\n### 3️⃣ Sugerir Refeição\n**Quando:** usuário pede sugestão para próxima refeição\n\n**Ação:**\n- **OBRIGATÓRIO:** chame `consultar_refeicao_diario` + `consultar_metas_macros` antes de sugerir qualquer coisa\n- Sugira algo que caiba nos macros restantes\n- Considere restrições alimentares do usuário (seção \"Dados do Usuário\" acima)\n- Use alimentos da Tabela Nutricional de Referência para montar a sugestão\n- Pergunte se quer registrar\n\n**Exemplo** (exibido APÓS retorno das tools):\n```\n💡 Que tal:\n\nFrango grelhado (150g) + batata doce (100g) + brócolis (100g)\n\n🥩 Proteína: 40g\n🍞 Carboidrato: 25g\n🥑 Gordura: 8g\n🔥 Total: 320 kcal\n\nQuer registrar como almoço?\n```\n\n---\n\n### 4️⃣ Montar Cardápio Completo\n**Quando:** usuário pede plano para o dia todo\n\n**Ação:**\n- **OBRIGATÓRIO:** chame `consultar_refeicao_diario` + `consultar_metas_macros` antes de montar qualquer cardápio\n- Desconte refeições já feitas\n- Monte 4-6 refeições que somem os macros restantes da meta\n- Considere restrições alimentares (se \"lactose\" → zero laticínios; se \"glúten\" → zero trigo/cevada/centeio)\n- Use alimentos da Tabela Nutricional de Referência\n- Mostre o total do dia no final\n\n**Exemplo** (exibido APÓS retorno das tools):\n```\n📅 Seu cardápio de hoje:\n\n☀️ *Café* (7h)\nTapioca (50g) + 2 ovos mexidos + café preto\n\n🥩 Proteína: 13g\n🍞 Carboidrato: 22g\n🥑 Gordura: 10g\n🔥 Total: 238 kcal\n\n🍎 *Lanche* (10h)\nBanana prata + pasta de amendoim (20g)\n\n🥩 Proteína: 6g\n🍞 Carboidrato: 27g\n🥑 Gordura: 10g\n🔥 Total: 210 kcal\n\n🍽️ *Almoço* (13h)\nArroz (100g) + frango peito (150g) + feijão (80g) + salada\n\n🥩 Proteína: 52g\n🍞 Carboidrato: 50g\n🥑 Gordura: 7g\n🔥 Total: 467 kcal\n\n📊 *Total do dia:*\n🥩 Proteína: 71g\n🍞 Carboidrato: 99g\n🥑 Gordura: 27g\n🔥 Total: 915 kcal\n```\n\n---\n\n### 5️⃣ Analisar Foto de Prato\n**Quando:** receber `<imagem>` ou `<caption>`\n\n**Ação:**\n- Analise a descrição que veio na tag <imagem>\n- Use a <caption> como contexto adicional se disponível\n- Estime macros usando a Tabela Nutricional de Referência\n- Pergunte se quer registrar\n- Se sim, pergunte qual refeição (ou deduza pelo horário)\n- **OBRIGATÓRIO:** se o usuário confirmar o registro, chame `registrar_refeicao` antes de exibir a confirmação\n\n**Exemplo:**\n```\nBoa! Pelo prato estimei:\n\n🥩 Proteína: 28g\n🍞 Carboidrato: 45g\n🥑 Gordura: 20g\n🔥 Total: 450 kcal\n\nQuer registrar? Pelo horário seria almoço, bate?\n```\n\n---\n\n### 6️⃣ Mensagem Fora de Escopo\n**Quando:** assunto não relacionado a nutrição/alimentação\n\n**Resposta fixa:**\n```\nOpa, eu sou especialista em nutrição! 🍽️\n\nPosso:\n✅ Registrar suas refeições\n✅ Sugerir cardápios personalizados\n✅ Analisar fotos de pratos\n\nMe conta o que comeu hoje ou me manda uma foto!\n```\n\n---\n\n### 7️⃣ Excluir Refeição\n**Quando:** usuário quer remover algo registrado\n\n**Ação:**\n- **OBRIGATÓRIO:** chame `consultar_refeicao_diario` para listar as refeições do dia antes de qualquer ação\n- Mostre a lista para o usuário com número de identificação\n- Identifique o UUID (campo `id`) da refeição que o usuário quer excluir\n- **OBRIGATÓRIO:** chame `excluir_refeicao` passando o UUID antes de confirmar a exclusão\n- Somente após retorno da tool, confirme a exclusão\n\n**Exemplo** (lista exibida APÓS retorno de `consultar_refeicao_diario`):\n```\nSuas refeições de hoje:\n\n1. Café — 2 ovos + pão (320 kcal)\n2. Almoço — arroz + frango + feijão (540 kcal)\n\nQual quer excluir?\n```\nApós o usuário escolher (confirmação exibida APÓS retorno de `excluir_refeicao`):\n```\nExcluído! ✅ Almoço removido do registro.\n```\n\n---\n\n## 🎨 Regras de Formatação\n\n### ✅ SEMPRE:\n- Seja direto e objetivo (máx 3-4 linhas de texto corrido)\n- Use emojis apenas nos macros e para destaques pontuais\n- Quebre linhas para melhor leitura no WhatsApp\n- Fale de forma natural, como um amigo\n- Arredonde todos os valores nutricionais para inteiros\n\n### ❌ NUNCA:\n- Parágrafos longos\n- Linguagem formal demais\n- Repetir informações que já foram ditas\n- Ser prolixo ou repetitivo\n- Inventar valores nutricionais — se não sabe, pergunte ou use a tabela\n- Exibir confirmações, macros ou IDs sem ter recebido retorno real de uma tool\n\n---\n\n## 📊 Padrão de Macros\n\n**SEMPRE use este formato em lista vertical:**\n```\n🥩 Proteína: Xg\n🍞 Carboidrato: Xg\n🥑 Gordura: Xg\n🔥 Total: X kcal\n```\n\n**NUNCA use o formato inline** (ex: ❌ 🥚 62g • 🍞 130g • 🥑 69g)\n\n---\n\n## 🔍 Consulta de Alimentos\n\nPara estimar macros, siga esta ordem de prioridade:\n\n1. **Tabela de Referência abaixo** → Use para alimentos comuns (cobre ~80% dos casos)\n2. **Tool `buscar_alimento_taco`** → Chame quando o alimento NÃO estiver na tabela\n3. **Conhecimento geral** → Último recurso, se a tool não retornar resultados\n\n### Nomes regionais (trate como sinônimos):\n- Macaxeira / aipim = mandioca\n- Carne de sol ≈ charque (use os macros do charque como referência)\n- Jerimum = abóbora\n- Bolacha = biscoito\n- Mexerica / bergamota / ponkan = tangerina\n- Cheiro-verde = salsa + cebolinha\n- Couve-manteiga = couve\n\n⚠️ NÃO pergunte ao usuário se \"macaxeira é mandioca\" ou \"carne de sol é charque\".\nVocê sabe que são equivalentes. Registre direto e mencione o nome que o USUÁRIO usou.\n\n---\n\n## 🧮 Tabela Nutricional de Referência (por 100g, salvo indicação)\n\nUse esta tabela como fonte primária para estimativas. Para alimentos fora dela, use conhecimento geral TACO/USDA.\n\n### 🥩 Proteínas\n\n| Alimento | Porção Ref | Prot | Carb | Gord | Kcal |\n|---|---|---|---|---|---|\n| Frango peito s/ pele, grelhado | 100g | 32g | 0g | 3g | 159 |\n| Frango coxa/sobrecoxa, assada | 100g | 26g | 0g | 8g | 178 |\n| Carne bovina patinho, grelhada | 100g | 32g | 0g | 7g | 193 |\n| Carne bovina acém, cozida | 100g | 27g | 0g | 10g | 198 |\n| Carne moída refogada | 100g | 26g | 0g | 11g | 212 |\n| Carne suína lombo, assada | 100g | 29g | 0g | 7g | 181 |\n| Ovo inteiro cozido | 1 un (50g) | 6g | 1g | 5g | 70 |\n| Atum em lata (escorrido) | 100g | 26g | 0g | 1g | 116 |\n| Sardinha em lata (escorrida) | 100g | 25g | 0g | 12g | 210 |\n| Tilápia grelhada | 100g | 26g | 0g | 2g | 128 |\n| Salmão grelhado | 100g | 25g | 0g | 12g | 208 |\n| Camarão cozido | 100g | 24g | 0g | 1g | 105 |\n| Whey protein | 1 scoop (30g) | 24g | 3g | 1g | 120 |\n\n### 🍚 Carboidratos\n\n| Alimento | Porção Ref | Prot | Carb | Gord | Kcal |\n|---|---|---|---|---|---|\n| Arroz branco cozido | 100g | 3g | 28g | 0g | 128 |\n| Arroz integral cozido | 100g | 3g | 25g | 1g | 124 |\n| Feijão carioca cozido | 100g | 5g | 14g | 1g | 76 |\n| Feijão preto cozido | 100g | 5g | 14g | 1g | 77 |\n| Lentilha cozida | 100g | 9g | 16g | 0g | 108 |\n| Macarrão cozido | 100g | 4g | 28g | 1g | 136 |\n| Batata doce cozida | 100g | 1g | 18g | 0g | 77 |\n| Batata inglesa cozida | 100g | 1g | 16g | 0g | 52 |\n| Mandioca cozida | 100g | 1g | 30g | 0g | 125 |\n| Inhame cozido | 100g | 2g | 24g | 0g | 97 |\n| Pão francês | 1 un (50g) | 4g | 30g | 2g | 150 |\n| Pão de forma integral | 1 fatia (25g) | 3g | 12g | 1g | 65 |\n| Tapioca (goma pronta) | 1 un (50g) | 0g | 42g | 0g | 168 |\n| Cuscuz de milho | 100g | 2g | 25g | 0g | 113 |\n| Aveia em flocos | 30g | 4g | 18g | 2g | 105 |\n| Granola | 40g | 3g | 28g | 5g | 168 |\n| Farinha de aveia | 30g | 4g | 20g | 2g | 115 |\n\n### 🍌 Frutas\n\n| Alimento | Porção Ref | Prot | Carb | Gord | Kcal |\n|---|---|---|---|---|---|\n| Banana prata | 1 un (90g) | 1g | 23g | 0g | 90 |\n| Maçã | 1 un (130g) | 0g | 17g | 0g | 70 |\n| Laranja | 1 un (140g) | 1g | 13g | 0g | 54 |\n| Manga | 100g | 1g | 15g | 0g | 64 |\n| Mamão papaia | 100g | 1g | 10g | 0g | 40 |\n| Morango | 100g | 1g | 7g | 0g | 30 |\n| Uva | 100g | 1g | 15g | 0g | 53 |\n| Abacaxi | 100g | 1g | 12g | 0g | 48 |\n| Melancia | 100g | 1g | 8g | 0g | 33 |\n| Abacate | 100g | 1g | 6g | 15g | 160 |\n| Açaí (polpa pura s/ xarope) | 100g | 4g | 6g | 34g | 335 |\n\n### 🥬 Vegetais e Legumes (100g cozidos ou crus)\n\n| Alimento | Porção Ref | Prot | Carb | Gord | Kcal |\n|---|---|---|---|---|---|\n| Brócolis cozido | 100g | 3g | 4g | 0g | 25 |\n| Couve refogada | 100g | 3g | 5g | 2g | 42 |\n| Espinafre cozido | 100g | 3g | 2g | 0g | 18 |\n| Abobrinha cozida | 100g | 1g | 3g | 0g | 15 |\n| Cenoura cozida | 100g | 1g | 7g | 0g | 30 |\n| Beterraba cozida | 100g | 2g | 8g | 0g | 38 |\n| Tomate cru | 100g | 1g | 3g | 0g | 15 |\n| Alface cru | 100g | 1g | 2g | 0g | 11 |\n| Pepino cru | 100g | 1g | 2g | 0g | 10 |\n| Milho verde cozido | 100g | 3g | 19g | 1g | 96 |\n\n### 🥑 Gorduras e Oleaginosas\n\n| Alimento | Porção Ref | Prot | Carb | Gord | Kcal |\n|---|---|---|---|---|---|\n| Azeite de oliva | 1 col sopa (13ml) | 0g | 0g | 14g | 120 |\n| Óleo de coco | 1 col sopa (13ml) | 0g | 0g | 14g | 120 |\n| Manteiga | 1 col sopa (12g) | 0g | 0g | 10g | 86 |\n| Pasta de amendoim | 1 col sopa (20g) | 5g | 4g | 10g | 120 |\n| Castanha-do-pará | 3 un (12g) | 2g | 0g | 8g | 80 |\n| Castanha de caju | 10 un (15g) | 3g | 4g | 7g | 86 |\n| Nozes | 4 metades (12g) | 2g | 1g | 8g | 78 |\n| Amendoim torrado | 30g | 8g | 5g | 15g | 177 |\n| Semente de chia | 1 col sopa (12g) | 2g | 5g | 4g | 58 |\n| Semente de linhaça | 1 col sopa (10g) | 2g | 3g | 3g | 50 |\n\n### 🧀 Laticínios\n\n| Alimento | Porção Ref | Prot | Carb | Gord | Kcal |\n|---|---|---|---|---|---|\n| Leite integral | 200ml | 6g | 10g | 6g | 120 |\n| Leite desnatado | 200ml | 7g | 10g | 0g | 72 |\n| Iogurte natural integral | 170g | 6g | 7g | 5g | 100 |\n| Iogurte grego natural | 100g | 6g | 4g | 5g | 90 |\n| Queijo muçarela | 30g (1 fatia) | 7g | 0g | 6g | 80 |\n| Queijo minas frescal | 30g | 5g | 0g | 4g | 56 |\n| Queijo cottage | 100g | 12g | 3g | 4g | 98 |\n| Requeijão cremoso | 1 col sopa (30g) | 2g | 1g | 6g | 63 |\n| Cream cheese | 1 col sopa (30g) | 2g | 1g | 10g | 99 |\n\n### 🍞 Preparações Comuns (porção típica brasileira)\n\n| Preparação | Porção Ref | Prot | Carb | Gord | Kcal |\n|---|---|---|---|---|---|\n| PF básico (arroz+feijão+frango+salada) | 1 prato | 40g | 55g | 12g | 490 |\n| Marmita fit (arroz int+frango+legumes) | 1 un (~350g) | 35g | 40g | 8g | 370 |\n| Açaí com granola e banana (tigela média) | 300ml | 6g | 65g | 18g | 440 |\n| X-burger simples (pão+carne+queijo) | 1 un | 22g | 30g | 20g | 390 |\n| Pizza calabresa | 1 fatia grande | 12g | 30g | 10g | 260 |\n| Coxinha | 1 un média (~80g) | 8g | 20g | 12g | 220 |\n| Pão de queijo | 1 un média (~40g) | 3g | 15g | 6g | 125 |\n| Tapioca c/ queijo e presunto | 1 un | 10g | 42g | 8g | 280 |\n| Omelete 2 ovos c/ queijo | 1 un | 18g | 2g | 16g | 220 |\n| Vitamina de banana c/ leite (300ml) | 1 copo | 8g | 38g | 7g | 240 |\n| Café com leite (200ml) | 1 xícara | 3g | 5g | 3g | 60 |\n| Suco de laranja natural | 200ml | 1g | 20g | 0g | 84 |\n\n---\n\n## 📏 Porções Médias de Referência (quando o usuário não especificar)\n\nUse estas porções quando o usuário disser apenas o nome do alimento sem quantidade:\n\n| Alimento | Porção Padrão Assumida |\n|---|---|\n| Arroz | 4 colheres de sopa (100g) |\n| Feijão | 1 concha média (80g) |\n| Frango/carne | 1 filé médio (120g) |\n| Salada | 1 prato de sobremesa (~50g) |\n| Ovo | 1 unidade (50g) |\n| Pão francês | 1 unidade (50g) |\n| Banana | 1 unidade média (90g) |\n| Batata doce | 1 unidade média (130g) |\n| Queijo fatiado | 2 fatias (60g) |\n| Leite | 1 copo (200ml) |\n| Azeite | 1 fio = 1 colher de chá (~5ml) |\n| Pasta de amendoim | 1 colher de sopa (20g) |\n| Macarrão | 1 prato fundo (200g cozido) |\n\n---\n\n## 🔢 Regra de Cálculo de Calorias\n\nSempre valide o total de kcal com esta fórmula:\n**kcal = (proteína × 4) + (carboidrato × 4) + (gordura × 9)**\n\nSe a soma dos macros não bater com o total, ajuste o total.\n\n---\n\n## 🚫 Restrições Profissionais\n\nNÃO faça:\n- Definir ou alterar metas nutricionais (isso vem do sistema)\n- Diagnósticos clínicos ou médicos\n- Recomendações médicas\n- Orientações sobre suplementos ou doenças\n- Se o usuário pedir algo assim, diga: \"Isso é melhor conversar com seu nutricionista! 😉\"\n\n---\n\n## 💬 Tom de Voz\n\nPense que você está conversando pelo WhatsApp com um amigo que quer melhorar a alimentação:\n\n✅ \"Registrado! Boa escolha 👏\"\n✅ \"Que tal um lanche leve agora?\"\n✅ \"Restam 159g de proteína pro dia\"\n\n❌ \"Conforme solicitado, realizei o registro da sua refeição\"\n❌ \"Com base nas informações fornecidas...\"\n❌ \"Gostaria de registrar essa refeição?\"",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3536,
+        144
+      ],
+      "id": "00c29ef4-39a5-427c-aec6-58f71b31b702",
+      "name": "prompt_trial"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://alimentaai.uazapi.com/message/download",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "[REDACTED_INSTANCE_TOKEN]"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "={{ $('camposIniciais').item.json.content.idMensagem }}"
+            },
+            {
+              "name": "return_link",
+              "value": "false"
+            },
+            {
+              "name": "transcribe",
+              "value": "true"
+            },
+            {
+              "name": "openai_apikey",
+              "value": "[REDACTED_USE_N8N_CREDENTIALS]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1472,
+        192
+      ],
+      "id": "6afe3692-b311-49d9-9ca9-ad6875e2060d",
+      "name": "Obter m dia em base"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "user_subscriptions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "user_id",
+              "keyValue": "={{ $json.auth_user_id }}"
+            }
+          ]
+        }
+      },
+      "alwaysOutputData": true,
+      "id": "b98dd1d8-3aa1-448b-a009-5caf96618077",
+      "name": "getSubscribe",
+      "position": [
+        848,
+        272
+      ],
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "executeOnce": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "zjMLKgrn79rcTLZk",
+          "name": "Alimentaai"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "57def860-28b0-4226-b536-4eeb68fae4ae",
+              "leftValue": "={{ $json.modo_macros }}",
+              "rightValue": "manual",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        736,
+        592
+      ],
+      "id": "cec6e2c1-cc0b-4d0e-a329-2a3cab494c35",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "tableId": "metas_macros",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "usuario_id",
+              "fieldValue": "={{ $('getClient1').item.json.id }}"
+            },
+            {
+              "fieldId": "proteina_g",
+              "fieldValue": "={{ $json.proteina_g }}"
+            },
+            {
+              "fieldId": "carboidrato_g",
+              "fieldValue": "={{ $json.carboidratos_g }}"
+            },
+            {
+              "fieldId": "gordura_g",
+              "fieldValue": "={{ $json.gorduras_g }}"
+            },
+            {
+              "fieldId": "calorias_kcal",
+              "fieldValue": "={{ $json.calorias }}"
+            },
+            {
+              "fieldId": "data_referencia",
+              "fieldValue": "={{ $now.toISO().split('T')[0] }}"
+            }
+          ]
+        }
+      },
+      "alwaysOutputData": true,
+      "id": "cbdff355-267a-4aae-82d9-f8ee40d7f042",
+      "name": "set_meta",
+      "position": [
+        1104,
+        672
+      ],
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "executeOnce": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "zjMLKgrn79rcTLZk",
+          "name": "Alimentaai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Boas Vindas PÓS CADASTRO / Calcula meta",
+        "height": 288,
+        "width": 1856,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        320,
+        544
+      ],
+      "typeVersion": 1,
+      "id": "004a476e-044d-44f3-9601-303cb085a94f",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 🧮 Função para calcular macronutrientes\n// Entradas esperadas em $json: \n// sexo, altura_cm, peso_atual_kg, nivel_atividade, objetivo, idade\n\nconst sexo = String($json.sexo).toLowerCase();\nconst altura = Number($json.altura_cm);\nconst peso = Number($json.peso_atual_kg);\nconst idade = Number($json.idade);\nconst nivel = String($json.nivel_atividade).toLowerCase();\nconst objetivo = String($json.objetivo).toLowerCase();\n\n// 1️⃣ Fatores de atividade\nconst fatores = {\n  sedentario: 1.2,\n  leve: 1.375,\n  moderado: 1.55,\n  intenso: 1.725,\n  muito_intenso: 1.9\n};\n\n// 2️⃣ TMB (Mifflin-St Jeor)\nlet TMB = 10 * peso + 6.25 * altura - 5 * idade + (sexo === 'masculino' ? 5 : -161);\n\n// 3️⃣ GET\nconst fatorAtividade = fatores[nivel] || 1.2;\nconst GET = TMB * fatorAtividade;\n\n// 4️⃣ Calorias alvo\nlet calorias;\nif (objetivo === 'emagrecer') calorias = GET - 500;\nelse if (objetivo === 'ganhar') calorias = GET + 500;\nelse calorias = GET;\n\n// 5️⃣ Proteínas (g)\nlet proteina = 0;\nif (objetivo === 'emagrecer') proteina = 2.0 * peso;\nelse if (objetivo === 'manter') proteina = 1.6 * peso;\nelse if (objetivo === 'ganhar') proteina = 2.2 * peso;\n\n// 6️⃣ Gorduras (g)\nlet gordura = (calorias * 0.25) / 9;\n\n// 7️⃣ Carboidratos (g)\nlet carbo = (calorias - (proteina * 4 + gordura * 9)) / 4;\n\n// 🔢 Arredondamento (padrão aritmético)\nproteina = Math.round(proteina);\ngordura = Math.round(gordura);\ncarbo = Math.round(carbo);\ncalorias = Math.round(calorias);\n\n// 8️⃣ Ajuste de consistência (carboidrato)\nconst totalCheck = proteina * 4 + carbo * 4 + gordura * 9;\nif (Math.abs(totalCheck - calorias) > 5) {\n  carbo = Math.round((calorias - (proteina * 4 + gordura * 9)) / 4);\n}\n\nreturn [\n  {\n    json: {\n      proteina_g: proteina,\n      carboidratos_g: carbo,\n      gorduras_g: gordura,\n      calorias: calorias\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        928,
+        672
+      ],
+      "id": "ddb3c52a-fb5a-4b52-ac6e-9ff6250e4353",
+      "name": "calcula_macro"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://criadordigital-n8n-webhook.2824f9.easypanel.host/webhook/8351b02a-42bd-4905-b025-0913ae2208d8",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "usuario_id",
+              "value": "={{ $('getClient1').item.json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1984,
+        576
+      ],
+      "id": "574fd399-98ea-4fa6-bdb4-4a2eb205638e",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://alimentaai.uazapi.com/message/download",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "[REDACTED_INSTANCE_TOKEN]"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "={{ $('camposIniciais').item.json.content.idMensagem }}"
+            },
+            {
+              "name": "return_base64",
+              "value": "true"
+            },
+            {
+              "name": "return_link",
+              "value": "false"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1328,
+        352
+      ],
+      "id": "8251e6da-d1af-41c5-8b26-ef7a1f54adda",
+      "name": "Obter m dia em base1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const msg = $json.body?.message;\nif (!msg) return [];\nif (msg.wasSentByApi) return [];\nif (msg.fromMe) return [];\nreturn items;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        80
+      ],
+      "id": "e8758dbc-6155-4d2d-b606-231b8dfc0bd2",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-2.5-flash",
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        4000,
+        176
+      ],
+      "id": "2e012b99-a92d-4e55-8a37-2506db160eee",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "M6XSMYIRORAOvKJw",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f9ecf2fc-da2c-4f44-897a-5dc0a2f2f379",
+              "name": "=meta.telefoneCliente",
+              "type": "string",
+              "value": "={{ $json.body.message.chatid }}"
+            },
+            {
+              "id": "a019046c-3b5a-4fd0-a497-de55cb2178ea",
+              "name": "meta.telefoneEmpresa",
+              "type": "string",
+              "value": "={{ $json.body.owner }}@s.whatsapp.net"
+            },
+            {
+              "id": "dab7ca54-c3d2-4a36-a9ca-a0ebbd375ef5",
+              "name": "meta.nomeCliente",
+              "type": "string",
+              "value": "={{ $json.body.message.senderName }}"
+            },
+            {
+              "id": "01238a36-6907-4aec-ab21-26345ed5fc96",
+              "name": "whatsapp.evo.nomeInstancia",
+              "type": "string",
+              "value": "={{ $json.body.instanceName }}"
+            },
+            {
+              "id": "81612acf-1b66-4c8e-82e4-ce8c77b31334",
+              "name": "content.mensagem",
+              "type": "string",
+              "value": "={{ $json.body.message.text }}"
+            },
+            {
+              "id": "cc7dcfe1-8ad7-4fe8-93ec-8f643c7d08c7",
+              "name": "content.tipoMensagem",
+              "type": "string",
+              "value": "={{ $json.body.message.messageType }}"
+            },
+            {
+              "id": "2dfc64f4-b222-4ea7-b095-fdd96d9fcb95",
+              "name": "content.idMensagem",
+              "type": "string",
+              "value": "={{ $json.body.message.messageid }}"
+            },
+            {
+              "id": "076ad2d4-b8ea-440f-9c02-f7e8417a984d",
+              "name": "whatsapp.evo.apikey",
+              "type": "string",
+              "value": "={{ $json.body.token }}"
+            },
+            {
+              "id": "0c237725-0428-4f1d-bddf-41bd289b3168",
+              "name": "whatsapp.evo.server_url",
+              "type": "string",
+              "value": "={{ $json.body.BaseUrl }}"
+            },
+            {
+              "id": "fc7c5c8f-b505-4a43-ae07-51eea58d6f80",
+              "name": "linkPreview",
+              "type": "boolean",
+              "value": true
+            },
+            {
+              "id": "16007a5d-caf1-48eb-9fce-6ccbc3c397a0",
+              "name": "apikey-openai",
+              "value": "[REDACTED_USE_N8N_CREDENTIALS]",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5103162f-e631-4b75-9cc3-9bfe36331cf8",
+      "name": "camposIniciais",
+      "notesInFlow": true,
+      "position": [
+        752,
+        80
+      ],
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "tableId": "refeicoes",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "descricao",
+              "fieldValue": "={{ $fromAI('descricao', `Se tiver alguma observação que precise ser anotada`, 'string') }}"
+            },
+            {
+              "fieldId": "proteina_g",
+              "fieldValue": "={{ $fromAI('proteina_g', `Informe a quantidade de proteina em gramas aproximada`, 'number') }}"
+            },
+            {
+              "fieldId": "carboidrato_g",
+              "fieldValue": "={{ $fromAI('carboidrato_g', `Informe a quantidade de carboidrato em gramas aproximada`, 'number') }}"
+            },
+            {
+              "fieldId": "gordura_g",
+              "fieldValue": "={{ $fromAI('gordura_g', `Informe a quantidade de gordura em gramas aproximada`, 'number') }}"
+            },
+            {
+              "fieldId": "calorias_kcal",
+              "fieldValue": "={{ $fromAI('calorias_kcal', `Informe a quantidade de calorias (kcal) aproximada`, 'number') }}"
+            },
+            {
+              "fieldId": "tipo_refeicao",
+              "fieldValue": "={{ $fromAI('tipo_refeicao', `Se cafe da manhã, lanche da manhã, almoço, lanche da tarde, janta oiu ceia`, 'string') }}"
+            },
+            {
+              "fieldId": "data_hora",
+              "fieldValue": "={{ DateTime.now().setZone('America/Sao_Paulo').toISO() }}"
+            },
+            {
+              "fieldId": "usuario_id",
+              "fieldValue": "={{ $('getClient').item.json.id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        4272,
+        224
+      ],
+      "id": "dffcdfb0-50bb-459c-9601-d96729b827a6",
+      "name": "registrar_refeicao",
+      "credentials": {
+        "supabaseApi": {
+          "id": "zjMLKgrn79rcTLZk",
+          "name": "Alimentaai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "refeicoes",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "usuario_id",
+              "condition": "eq",
+              "keyValue": "={{ $('getClient').item.json.id }}"
+            },
+            {
+              "keyName": "data_hora",
+              "condition": "gte",
+              "keyValue": "={{ DateTime.now().setZone('America/Sao_Paulo').startOf('day').toUTC().toISO() }}"
+            },
+            {
+              "keyName": "data_hora",
+              "condition": "lt",
+              "keyValue": "={{ DateTime.now().setZone('America/Sao_Paulo').endOf('day').toUTC().toISO() }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        4448,
+        224
+      ],
+      "id": "56659fe7-8b43-424a-9366-00f1af994763",
+      "name": "consultar_refeicao_diario",
+      "credentials": {
+        "supabaseApi": {
+          "id": "zjMLKgrn79rcTLZk",
+          "name": "Alimentaai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "metas_macros",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "usuario_id",
+              "keyValue": "={{ $('getClient').item.json.id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        4608,
+        304
+      ],
+      "id": "b6e8cc3e-a5d1-408d-9864-6d4d5d6d7f69",
+      "name": "consultar_metas_macros",
+      "credentials": {
+        "supabaseApi": {
+          "id": "zjMLKgrn79rcTLZk",
+          "name": "Alimentaai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "refeicoes",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "usuario_id",
+              "condition": "eq",
+              "keyValue": "={{ $('getClient').item.json.id }}"
+            },
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $fromAI('id', `Use a ferramenta 'consultar_refeicao_diario' para coletar o id da refeição exata a ser deletada`, 'string') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        4384,
+        368
+      ],
+      "id": "1fbdb2c5-0af7-49c5-92cd-49ca9d6ad609",
+      "name": "excluir_refeicao",
+      "credentials": {
+        "supabaseApi": {
+          "id": "zjMLKgrn79rcTLZk",
+          "name": "Alimentaai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolName": "match_alimentos_taco",
+        "toolDescription": "Busca informações nutricionais de alimentos na tabela TACO (Tabela Brasileira de Composição de Alimentos). Use esta ferramenta quando precisar dos macronutrientes (proteína, carboidrato, gordura, calorias) de um alimento que NÃO está na tabela de referência do prompt, ou quando quiser mais precisão nos valores. Passe o nome do alimento em português. Exemplos: 'peito de peru', 'carne de sol', 'caqui', 'tapioca'. A ferramenta retorna os valores por 100g (salvo indicação na porção de referência). Retorna nome, grupo, proteina_g, carboidrato_g, gordura_g, fibra_g, calorias_kcal e porcao_referencia_g.",
+        "tableName": {
+          "__rl": true,
+          "value": "alimentos_taco",
+          "mode": "list",
+          "cachedResultName": "alimentos_taco"
+        },
+        "topK": 5,
+        "options": {
+          "queryName": "match_alimentos_taco"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [
+        3920,
+        352
+      ],
+      "id": "f1c6f086-86c9-4a6c-bc33-46fa1770788e",
+      "name": "buscar_alimento_taco",
+      "credentials": {
+        "supabaseApi": {
+          "id": "zjMLKgrn79rcTLZk",
+          "name": "Alimentaai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.1,
+      "position": [
+        4192,
+        368
+      ],
+      "id": "b41ece08-d5c8-4466-a52c-d2321bfa1521",
+      "name": "Embeddings OpenAI TACO",
+      "credentials": {
+        "openAiApi": {
+          "id": "lL0oUnoKdL1CXw9l",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ac50728d-0db6-404c-b7ec-08e06c45e55e",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        368,
+        80
+      ],
+      "id": "9d428066-57f1-4737-b1ad-1360eeb01fd9",
+      "name": "Webhook",
+      "webhookId": "ac50728d-0db6-404c-b7ec-08e06c45e55e"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('camposIniciais').item.json.whatsapp.evo.server_url }}/send/text",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "={{ $('camposIniciais').item.json.whatsapp.evo.apikey }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $('camposIniciais').item.json.meta.telefoneCliente }}"
+            },
+            {
+              "name": "text",
+              "value": "=Analisando sua imagem! Um momento!"
+            },
+            {
+              "name": "delay",
+              "value": "={{ Number(1200) }}"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "id": "1286f456-9624-4066-8527-8143f89f9910",
+      "name": "Envar \"analisando imagem\"",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1168,
+        352
+      ],
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "tableId": "tbf_interactions",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "telefone",
+              "fieldValue": "={{ $('Code').item.json.phone_cliente_canonical }}@s.whatsapp.net"
+            },
+            {
+              "fieldId": "user_name",
+              "fieldValue": "={{ $('camposIniciais').item.json.meta.nomeCliente }}"
+            },
+            {
+              "fieldId": "tbf_at",
+              "fieldValue": "={{ DateTime.now().toISO() }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3904,
+        -208
+      ],
+      "id": "e0493955-b033-4650-b192-caf70e5c07d1",
+      "name": "tbf_interactions",
+      "credentials": {
+        "supabaseApi": {
+          "id": "zjMLKgrn79rcTLZk",
+          "name": "Alimentaai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "tbf_interactions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "telefone",
+              "condition": "eq",
+              "keyValue": "={{ $('Code').item.json.phone_cliente_canonical }}@s.whatsapp.net"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "tbf_completed",
+              "fieldValue": "true"
+            },
+            {
+              "fieldId": "cta_sent_at",
+              "fieldValue": "={{ DateTime.now().toISO() }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        4512,
+        448
+      ],
+      "id": "38409977-b20a-4202-af1d-e8cf18c322da",
+      "name": "marcar_tbf_concluido",
+      "credentials": {
+        "supabaseApi": {
+          "id": "zjMLKgrn79rcTLZk",
+          "name": "Alimentaai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d883b8a9-a61b-4867-a0d1-fece39b11b5f",
+              "name": "trialLink",
+              "value": "=https://criadordigital-n8n-editor.2824f9.easypanel.host/webhook/redirect?id={{ $json.id }}&step=0",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3792,
+        -368
+      ],
+      "id": "f9c8aa8e-15df-4767-b56f-763abb043723",
+      "name": "gera_link_trial"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "tableId": "tbf_interactions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "telefone",
+              "keyValue": "={{ $('Code').item.json.phone_cliente_canonical }}@s.whatsapp.net"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3424,
+        -352
+      ],
+      "id": "29264c7a-120f-4154-bb57-fe85c68049ec",
+      "name": "tbf_interactions1",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "zjMLKgrn79rcTLZk",
+          "name": "Alimentaai"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "92d28b89-afd6-48ec-a755-a22244f28ad9",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3600,
+        -352
+      ],
+      "id": "dac6c515-4ddf-4bd8-b441-bb2ec21f26bc",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($json.text || '').includes('QUERO_BOTAO_TESTE') \n  ? $('camposIniciais').item.json.whatsapp.evo.server_url + '/send/menu' \n  : $('camposIniciais').item.json.whatsapp.evo.server_url + '/send/text' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "token",
+              "value": "={{ $('camposIniciais').item.json.whatsapp.evo.apikey }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n  ($json.text || '').includes('QUERO_BOTAO_TESTE') \n  ? {\n      number: $('camposIniciais').item.json.meta.telefoneCliente + \"@s.whatsapp.net\",\n      type: \"button\",\n      text: \"🔥 Seu progresso já começou — continue agora:\",\n      footerText: \"Para continuar registrando suas refeições, batendo suas metas e ter seu nutricionista de bolso 24h por dia, escolha o seu plano:\",\n      listButton: \"Abrir\",\n      selectableCount: 1,\n      choices: [\n        \"👉 Quero continuar minha evolução|\" + $('gera_link_trial').item.json.trialLink\n      ]\n    }\n  : {\n      number: $('camposIniciais').item.json.meta.telefoneCliente + \"@s.whatsapp.net\",\n      text: $json.text\n    }\n}}",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "id": "fa2cdd3c-3d15-4c93-8f63-ab07c8de9b5e",
+      "name": "Responde texto4",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        5344,
+        288
+      ],
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    }
+  ],
+  "connections": {
+    "agente_refeicao": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "edit2": {
+      "main": [
+        [
+          {
+            "node": "Filtra Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtra Webhook": {
+      "main": [
+        [
+          {
+            "node": "Lista Mensagens1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Puxar as Mensagens",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Puxar as Mensagens": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lista Mensagens1": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getClient": {
+      "main": [
+        [
+          {
+            "node": "getSubscribe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "mensagem_tipo": {
+      "main": [
+        [
+          {
+            "node": "edit",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Obter m dia em base",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Envar \"analisando imagem\"",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Redis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields5": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Replace Me",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Responde texto4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "agente_refeicao",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "edit": {
+      "main": [
+        [
+          {
+            "node": "edit2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "edit2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "edit3": {
+      "main": [
+        [
+          {
+            "node": "edit2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getClient1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responde texto": {
+      "main": [
+        [
+          {
+            "node": "Chat Memory Manager",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Memory Manager": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Chat Memory Manager",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "getClient1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "getClient",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File2": {
+      "main": [
+        [
+          {
+            "node": "Analyze image1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "base": {
+      "main": [
+        [
+          {
+            "node": "Convert to File2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze image1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Responde texto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "tbf_interactions1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "prompt_trial",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "prompt_trial",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "prompt_trial_expired",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "prompt_nao_cadastrado": {
+      "main": [
+        [
+          {
+            "node": "agente_refeicao",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "prompt_trial_expired": {
+      "main": [
+        [
+          {
+            "node": "agente_refeicao",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "prompt_trial": {
+      "main": [
+        [
+          {
+            "node": "agente_refeicao",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obter m dia em base": {
+      "main": [
+        [
+          {
+            "node": "edit3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getSubscribe": {
+      "main": [
+        [
+          {
+            "node": "mensagem_tipo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "calcula_macro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set_meta": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "calcula_macro": {
+      "main": [
+        [
+          {
+            "node": "set_meta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obter m dia em base1": {
+      "main": [
+        [
+          {
+            "node": "base",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "camposIniciais",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "agente_refeicao",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "camposIniciais": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "registrar_refeicao": {
+      "ai_tool": [
+        [
+          {
+            "node": "agente_refeicao",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "consultar_refeicao_diario": {
+      "ai_tool": [
+        [
+          {
+            "node": "agente_refeicao",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "consultar_metas_macros": {
+      "ai_tool": [
+        [
+          {
+            "node": "agente_refeicao",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "excluir_refeicao": {
+      "ai_tool": [
+        [
+          {
+            "node": "agente_refeicao",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "buscar_alimento_taco": {
+      "ai_tool": [
+        [
+          {
+            "node": "agente_refeicao",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI TACO": {
+      "ai_embedding": [
+        [
+          {
+            "node": "buscar_alimento_taco",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Envar \"analisando imagem\"": {
+      "main": [
+        [
+          {
+            "node": "Obter m dia em base1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tbf_interactions": {
+      "main": [
+        [
+          {
+            "node": "tbf_interactions1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "marcar_tbf_concluido": {
+      "ai_tool": [
+        [
+          {
+            "node": "agente_refeicao",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "gera_link_trial": {
+      "main": [
+        [
+          {
+            "node": "prompt_nao_cadastrado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "tbf_interactions1": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "gera_link_trial",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "tbf_interactions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responde texto4": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "78ebaa0ba2cf38d7fa73d959786aaad314fe302a718dd763906efec9a57f3276"
+  }
+}

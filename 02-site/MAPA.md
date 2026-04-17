@@ -38,3 +38,8 @@ Fluxo alternativo: `/comece-agora` → recolha de dados → continuação para a
 | Stripe | Checkout hospedado (`startStripeCheckout`) | Redirecionamento para pagamento; retorno com query `checkout=canceled` tratada em `/assinar` |
 
 Não documentar valores secretos de API no Brain — apenas nomes de variáveis e comportamento.
+
+## Automação WhatsApp (fora do código do site)
+
+O atendimento por WhatsApp (Evolution / UAZAPI → n8n → Supabase / LLM) está documentado na pasta **`03-n8n/`**.  
+Export sanitizado do workflow (JSON): [`workflow-export.json`](../03-n8n/workflow-export.json) — **sem** `pinData`, chaves `sk-*` nem tokens de instância; credenciais devem existir só no n8n.

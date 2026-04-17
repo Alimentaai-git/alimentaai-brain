@@ -1,6 +1,6 @@
 # AlimentaAI — Contexto Completo
 
-> Gerado automaticamente em 2026-04-17 19:59 UTC
+> Gerado automaticamente em 2026-04-17 20:09 UTC
 > **Não edite este arquivo diretamente.** Edite os arquivos fonte nas pastas 00-12.
 
 
@@ -80,20 +80,37 @@ Em uma linha (alinhada à landing): *Seu nutricionista no WhatsApp, com plano aj
 # Produto — Mapa
 
 ## Visão geral do produto
-<!-- O que o produto faz do ponto de vista do usuário -->
+
+Acompanhamento de nutrição/hábito alimentar com **IA no WhatsApp** (conversa, ajustes de plano) e **painel web** para metas e histórico; registro simplificado incluindo **foto da refeição** interpretada como macros/calorias no discurso do produto. Planos pagos com **Stripe**; identidade e auth com **Supabase**.
 
 ## Funcionalidades ativas
+
 | Feature | Status | Descrição |
-|---|---|---|
-| | | |
+|---------|--------|-----------|
+| Landing e marketing | Ativo no código | `/` — hero, demos, FAQ, CTAs |
+| Auth (login/registo) | Ativo no código | `/auth` |
+| Onboarding “Comece agora” | Ativo no código | `/comece-agora` |
+| Dashboard | Ativo no código | `/dashboard` |
+| Planos | Ativo no código | `/planos` |
+| Assinatura Stripe | Ativo no código | `/assinar`, `/assinatura` + `checkout/sucesso` |
+| Onboarding pós-compra | Ativo no código | `/onboarding/revisao`, `/onboarding/ativar-teste` |
+| Documentos legais | Ativo no código | privacidade e termos |
+| Analytics | Ativo no código (se env configurado) | Meta Pixel + GA4, eventos de checkout/subscribe |
+| Teste WhatsApp | Ativo no código | CTA abre WhatsApp (`VITE_WHATSAPP_NUMBER` no `.env`) |
 
 ## Funcionalidades planejadas
-| Feature | Prioridade | ETA |
-|---|---|---|
-| | | |
 
-## Fluxo principal do usuário
-<!-- Diagrama ou descrição do caminho que o usuário percorre -->
+| Feature | Prioridade | ETA |
+|---------|------------|-----|
+| A definir pela equipa | — | Documentar em `10-roadmap/` quando houver decisão |
+
+## Fluxo principal do utilizador
+
+1. **Descoberta** → `/`
+2. **Interesse** → teste WhatsApp ou `/comece-agora` ou `/planos`
+3. **Conta** → `/auth` quando necessário
+4. **Compra** → `/assinar` → Stripe → `/checkout/sucesso`
+5. **Uso** → `/dashboard` + interação WhatsApp (fora deste repo front)
 
 
 ---
@@ -102,19 +119,28 @@ Em uma linha (alinhada à landing): *Seu nutricionista no WhatsApp, com plano aj
 # Produto — Contexto
 
 ## Estado atual
-<!-- Onde o produto está hoje -->
+
+- Produto entregue como **SPA** no repositório [site-alimentaai](https://github.com/Alimentaai-git/site-alimentaai) com fluxos de landing, auth, onboarding, dashboard e pagamentos descritos em `01-produto/MAPA.md` e `02-site/MAPA.md`.
+- Catálogo de preços e IDs para checkout/analytics centralizados em `planCatalog` (ver `01-produto/precos/`).
 
 ## Principais decisões tomadas
-<!-- Decisões de produto que moldaram o que temos hoje -->
+
+- **Checkout Stripe** com sessão criada no cliente via helper dedicado; redirecionamento completo para Stripe.
+- **Lead antes do pagamento**: sem `ref` UUID válido, o utilizador preenche nome e WhatsApp e o sistema chama a Edge Function `assinar-lead` para obter `refId` antes do Stripe.
+- **Tracking**: eventos alinhados ao `PLAN_CATALOG` para Meta e GA4 no momento de checkout/subscrição.
 
 ## Limitações conhecidas
-<!-- O que sabemos que não funciona bem ainda -->
 
-## Feedback dos usuários
-<!-- Principais pontos levantados por clientes reais -->
+- Comportamento completo dos fluxos WhatsApp e automações **não** está neste repositório front — documentar em `03-n8n/` quando o fluxo estiver descrito noutro sítio.
+- Dependência de variáveis `VITE_*` e de projeto Supabase/Stripe corretamente configurados em cada ambiente.
+
+## Feedback dos utilizadores
+
+- **A recolher** — quando houver tickets, NPS ou exportações, resumir aqui ou em `06-clientes/CONTEXTO.md`.
 
 ## Próximas evoluções
-<!-- O que está sendo pensado para o produto -->
+
+- **A documentar** em `10-roadmap/` com datas dono — não inferir a partir só do código.
 
 
 ---
@@ -123,13 +149,21 @@ Em uma linha (alinhada à landing): *Seu nutricionista no WhatsApp, com plano aj
 # Preços — Contexto
 
 ## Estratégia de precificação
-<!-- Baseada em valor? Concorrência? Custo? -->
+
+- **Âncora**: trimestral com badge de escolha majoritária e custo-diário baixo vs. percepção de “nutricionista”.
+- **Entrada**: mensal com barreira mais baixa e ênfase em cancelamento simples.
+- **Upsell / retenção longa**: anual com “maior economia” e benefícios cumulativos listados na página de assinatura.
+
+Tudo acima reflete o **posicionamento implementado no site**, não um benchmark externo anexado.
 
 ## Benchmarks do mercado
-<!-- Como a concorrência precifica -->
+
+- **Não preenchidos a partir do repositório do site** — adicionar quando houver pesquisa de concorrentes ou dados internos.
 
 ## Decisões tomadas
-<!-- Por que o preço atual é esse -->
+
+- Preços e IDs de conteúdo para analytics/checkout vivem centralmente em `src/lib/planCatalog.ts` (valores atuais: 27,9 / 75,9 / 229,9 BRL).
+- Eventos Meta (`InitiateCheckout`) e GA4 (`begin_checkout`) usam `contentId` / valor do mesmo catálogo para consistência com Stripe.
 
 
 ---
@@ -138,16 +172,43 @@ Em uma linha (alinhada à landing): *Seu nutricionista no WhatsApp, com plano aj
 # Site — Mapa
 
 ## Estrutura de páginas
-| Página | URL | Objetivo |
-|---|---|---|
-| Home | / | |
-| | | |
+
+| Página | Rota | Objetivo |
+|--------|------|----------|
+| Landing (home) | `/` | Apresentar proposta de valor, demos WhatsApp, FAQ, CTAs para teste e assinatura |
+| Autenticação | `/auth` | Login/registo; reforço de benefício (foto → macros, WhatsApp + painel) |
+| Comece agora | `/comece-agora` | Onboarding inicial do lead (dados para começar) |
+| Dashboard | `/dashboard` | Área logada — acompanhamento, gráficos, histórico |
+| Planos | `/planos` | Página de planos (catálogo de oferta) |
+| Assinar | `/assinar`, `/assinatura` | Escolha de ciclo (mensal/trimestral/anual), captura lead se necessário, checkout Stripe |
+| Checkout sucesso | `/checkout/sucesso` | Pós-pagamento Stripe |
+| Onboarding revisão | `/onboarding/revisao` | Passo pós-compra |
+| Ativar teste | `/onboarding/ativar-teste` | Fluxo de ativação de teste |
+| Política de privacidade | `/politica-de-privacidade` | Legal |
+| Termos de uso | `/termos-de-uso` | Legal |
+| 404 | `*` | Página não encontrada |
+
+Fonte de rotas: repositório do site (`App.tsx` / router).
 
 ## Funil de conversão
-<!-- Caminho que o visitante percorre até virar cliente -->
+
+1. **Topo**: visitante chega à `/` (orgânico, paid, indicação — canal a documentar em marketing).
+2. **Meio**: interação com CTAs “Testar grátis” / WhatsApp e leitura de prova social na landing.
+3. **Fundo**: `/assinar` (ou `/planos` → assinatura) com Stripe; parâmetros opcionais `?src=` (campanha) e `?ref=` (UUID de utilizador/lead já criado).
+4. **Pós-compra**: `/checkout/sucesso` e rotas `/onboarding/*` conforme implementação.
+
+Fluxo alternativo: `/comece-agora` → recolha de dados → continuação para auth/dashboard conforme produto.
 
 ## Integrações ativas no site
-<!-- Analytics, chat, pixels, formulários, etc. -->
+
+| Integração | Como entra | Notas |
+|------------|------------|--------|
+| Meta Pixel | `VITE_META_PIXEL_ID` no `.env`; carregamento em `initAnalytics()` | Eventos ex.: `InitiateCheckout` com `content_ids` do plano |
+| Google Analytics 4 | `VITE_GA4_MEASUREMENT_ID` no `.env` | Eventos ex.: `begin_checkout`, subscrição alinhada ao catálogo |
+| Supabase | Cliente JS + Edge Functions (ex.: `assinar-lead`) | URL e keys via variáveis de ambiente |
+| Stripe | Checkout hospedado (`startStripeCheckout`) | Redirecionamento para pagamento; retorno com query `checkout=canceled` tratada em `/assinar` |
+
+Não documentar valores secretos de API no Brain — apenas nomes de variáveis e comportamento.
 
 
 ---
@@ -156,16 +217,26 @@ Em uma linha (alinhada à landing): *Seu nutricionista no WhatsApp, com plano aj
 # Site — Contexto
 
 ## Objetivo principal do site
-<!-- Venda direta? Captura de lead? Institucional? -->
+
+**Converter** visitantes em utilizadores: teste de WhatsApp sem fricção, clareza de preço (“menos de R$ 1 por dia” como âncora na hero quando o cálculo do trimestral o permite) e **assinatura** via Stripe. O site também suporta **autenticação** e **painel** para quem já é cliente.
 
 ## Estado atual
-<!-- O que está funcionando, o que precisa de atenção -->
+
+- Landing em `/` com hero focado em **nutrição no WhatsApp**, plano ajustado em tempo real, **sem app extra** e **sem consulta cara** (copy alinhada ao componente `Index`).
+- Destaques de confiança na navegação: **100% no WhatsApp**, **cancele quando quiser**, **teste grátis sem cartão** onde aplicável.
+- Checkout e planos vivem em `/assinar` (alias `/assinatura`), com planos mensal, trimestral e anual definidos no código (`PLAN_CATALOG`).
+- Fluxo de checkout cancelado: query `?checkout=canceled` mostra toast e limpa o parâmetro da URL.
 
 ## Decisões de design e UX tomadas
-<!-- Por que está estruturado assim -->
+
+- **Mobile-first** e demos estilo conversa WhatsApp na home para reduzir abstração do produto.
+- **Gradientes** e cores em torno de verde/teal (tokens HSL — ver `05-marketing` e `00-identidade/STACK`).
+- **Shadcn/Radix** para componentes acessíveis (accordion, dialog, toast).
+- **Proxy Vite** em desenvolvimento para chamadas ao mesmo origin em relação ao Supabase (evitar erros de CORS no dev).
 
 ## Principais métricas
-<!-- Taxa de conversão, bounce rate, sessões/mês -->
+
+- **Ainda não documentadas neste repositório** — preencher quando houver GA4/Meta exportados ou dashboard interno (CTR, conversão por página, CAC).
 
 
 ---
@@ -244,17 +315,23 @@ Injete o resultado como system prompt em qualquer nó LLM do fluxo.
 # Marketing — Mapa
 
 ## Canais ativos
+
 | Canal | Objetivo | Frequência | Responsável |
-|---|---|---|---|
-| | | | |
+|-------|----------|------------|-------------|
+| Site (landing) | Conversão e teste | Contínua | *A definir dono* |
+| Meta Ads (Pixel) | Remarketing / conversões | Quando `VITE_META_PIXEL_ID` configurado | *A definir* |
+| Google Analytics 4 | Medição de funil | Quando `VITE_GA4_MEASUREMENT_ID` configurado | *A definir* |
+| WhatsApp (CTA) | Teste e suporte comercial | Contínua | *A definir* |
 
 ## Funil de marketing
-- **Topo**: Como as pessoas nos descobrem
-- **Meio**: Como as pessoas consideram o AlimentaAI
-- **Fundo**: Como as pessoas decidem comprar
+
+- **Topo**: tráfego para `/` (orgânico, paid, indicação — detalhar em campanhas).
+- **Meio**: prova social e demos de conversa; secção “Por que você sempre desiste?” contrastando apps tradicionais vs. AlimentaAI.
+- **Fundo**: `/assinar` com planos e Stripe; parâmetros `?src=` e `?ref=` para atribuição e checkout com utilizador já referenciado.
 
 ## Calendário editorial
-<!-- Onde fica o calendário de conteúdo -->
+
+- *Fora do repositório do site — ligar Notion/planilha aqui quando existir.*
 
 
 ---
@@ -263,30 +340,53 @@ Injete o resultado como system prompt em qualquer nó LLM do fluxo.
 # Marketing — Contexto
 
 ## Estratégia atual
-<!-- Qual a aposta principal de aquisição hoje -->
+
+- **Mensagem principal (hero)**: “Seu nutricionista no WhatsApp” com âncora de preço acessível (“por menos de R$ 1 por dia” quando o cálculo do plano trimestral o suporta).
+- **Subpromessa**: emagrecer, ganhar massa ou comer melhor com plano **ajustado em tempo real**, sem app extra nem consulta cara.
+- **Prova na página de planos**: badges de copy (“Escolhido por 73% dos usuários”, “Maior economia”) — tratar como **mensagem de marketing** no site, não como estatística auditada neste documento.
+- **Canais técnicos**: Meta Pixel e GA4 opcionais via `VITE_META_PIXEL_ID` e `VITE_GA4_MEASUREMENT_ID` (ver `02-site/MAPA.md`).
 
 ## O que já testamos e não funcionou
-<!-- Memória de experimentos fracassados — essencial para não repetir -->
+
+- *A preencher com dados reais de campanha / retrospectivas.*
 
 ## O que está funcionando
-<!-- Canais e formatos com melhor retorno -->
+
+- *A preencher com métricas por canal (CPL, ROAS, etc.) quando disponíveis.*
 
 ## Identidade visual — diretrizes principais
-<!-- Regras de uso da marca, logo, cores -->
+
+- Marca **AlimentaAI** com wordmark “Alimenta” em gradiente + “AI” em cor de texto.
+- Uso consistente de **verde/teal** (HSL) para primário e secundário; fundo claro com ruído suave na hero.
+- CTAs em **pill** com gradiente primary→secondary; ícone de presente no “Testar grátis”.
+- Tom visual: moderno, saúde/digital, sem exagero “clínico frio”.
 
 ## Paleta de cores
-| Cor | HEX | Uso |
-|---|---|---|
-| Primária | | |
-| Secundária | | |
-| Acento | | |
-| Fundo | | |
+
+Valores em **HSL** (componentes `h s l` sem `hsl()` — o Tailwind do site usa `hsl(var(--token))`).
+
+| Token | HSL `:root` | Uso |
+|-------|-------------|-----|
+| `--background` | `0 0% 100%` | Fundo geral (tema claro) |
+| `--foreground` | `160 84% 8%` | Texto principal |
+| `--primary` | `160 84% 39%` | Marca, CTAs, ênfase |
+| `--primary-foreground` | `0 0% 100%` | Texto sobre primário |
+| `--secondary` | `160 61% 65%` | Gradientes, apoio visual |
+| `--secondary-foreground` | `160 84% 8%` | Texto sobre secundário |
+| `--muted` | `160 30% 96%` | Fundos suaves |
+| `--muted-foreground` | `160 10% 45%` | Texto secundário |
+| `--accent` | `160 100% 45%` | Destaques |
+| `--accent-foreground` | `0 0% 100%` | Texto sobre accent |
+| `--destructive` | `0 84.2% 60.2%` | Erros / aviso |
+| `--border` / `--input` / `--ring` | `160 30% 90%` / idem / `160 84% 39%` | Limites e foco |
+
+Tema **`.dark`**: ver mesmo ficheiro no site para valores noturnos.
 
 ## Tipografia
+
 | Fonte | Peso | Uso |
-|---|---|---|
-| | | Títulos |
-| | | Corpo |
+|-------|------|-----|
+| Inter | 300–900 (Google Fonts no `index.html` do site) | Títulos e corpo |
 
 
 ---
@@ -313,24 +413,29 @@ Injete o resultado como system prompt em qualquer nó LLM do fluxo.
 
 ## Personas
 
-### Persona 1 — [Nome]
-- **Perfil**: 
-- **Dor principal**: 
-- **Como nos encontrou**: 
-- **O que mais valoriza**: 
-- **Maior objeção de compra**: 
+### Persona 1 — “Exausta de apps de dieta”
 
-### Persona 2 — [Nome]
-- **Perfil**: 
-- **Dor principal**: 
-- **Como nos encontrou**: 
-- **O que mais valoriza**: 
-- **Maior objeção de compra**: 
+- **Perfil**: Adulto que já tentou vários apps de contagem de calorias; usa smartphone no dia a dia; quer resultado sem microgestão.
+- **Dor principal**: Abrir app várias vezes ao dia; procurar alimentos em listas longas; ajustar gramas à mão; gastar vários minutos só para registar um almoço simples.
+- **Como nos encontrou**: Orgânico ou anúncio (a confirmar em dados) — landing `/`.
+- **O que mais valoriza**: **100% no WhatsApp**, plano que **se adapta** quando o dia foge ao planeado, linguagem sem culpa excessiva.
+- **Maior objeção de compra**: “Será mais um serviço que abandono?” — resposta na copy: teste grátis sem cartão onde comunicado, cancelamento simples.
+
+### Persona 2 — “Vida real imprevisível”
+
+- **Perfil**: Pessoa com eventos sociais, família, viagens; precisa de flexibilidade, não de plano rígido que “estraga” com um jantar fora.
+- **Dor principal**: Culpa e sensação de “recomeçar do zero” após escorregar; falta de acompanhamento humano/IA que **reorganize o dia**.
+- **Como nos encontrou**: Indicação ou redes (a confirmar).
+- **O que mais valoriza**: Ajustes em **tempo real**; mensagens estilo “sem problema, amanhã equilibramos” alinhadas à demo da landing.
+- **Maior objeção de compra**: Preço vs. nutricionista presencial — contrapor com **custo por dia** baixo e conveniência.
 
 ## Segmentos de clientes
+
 | Segmento | Tamanho estimado | Característica principal |
-|---|---|---|
-| | | |
+|----------|------------------|---------------------------|
+| Perda de peso | *A medir* | Foco em déficit e consistência |
+| Ganho de massa / performance | *A medir* | Foco em proteína e calorias |
+| Reeducação alimentar geral | *A medir* | Foco em hábito e simplicidade |
 
 
 ---
@@ -339,20 +444,31 @@ Injete o resultado como system prompt em qualquer nó LLM do fluxo.
 # Clientes — Contexto
 
 ## Feedbacks recorrentes
+
 ### Elogios mais comuns
-<!-- O que os clientes mais valorizam -->
+
+- *A consolidar a partir de suporte, NPS ou reviews — não inferido do código.*
 
 ### Reclamações mais comuns
-<!-- O que mais incomoda -->
+
+- *Idem.*
 
 ## Casos de uso reais
-<!-- Como clientes reais usam o produto no dia a dia -->
+
+- **Uso desejado pelo produto**: enviar refeições e mensagens pelo **WhatsApp**; acompanhar metas e histórico no **painel** web; percorrer **onboarding** após compra ou teste.
+- **Cenários ilustrados na landing**: planeamento do dia; imprevisto à noite; resposta acolhedora e reajuste — ver demos na página inicial do site.
 
 ## Churn — por que saem
-<!-- Motivos mais comuns de cancelamento ou abandono -->
+
+- *A documentar com dados de billing e inquéritos de cancelamento.*
 
 ## Depoimentos e provas sociais
-<!-- Onde ficam os depoimentos reais e como coletamos -->
+
+- A landing pode conter provas sociais dinâmicas ou estáticas — **sincronizar** aqui os links ou IDs de conteúdo quando a equipa fixar a fonte oficial (não duplicar dados pessoais sem consentimento).
+
+## Alinhamento com identidade
+
+- Dores e promessas deste ficheiro devem manter-se **coerentes** com `00-identidade/CONTEXTO.md` (WhatsApp, simplicidade, sem culpa, não somos substituto clínico).
 
 
 ---
@@ -431,17 +547,33 @@ Injete o resultado como system prompt em qualquer nó LLM do fluxo.
 
 # Integrações — Contexto
 
-## Fluxo principal ponta a ponta
-<!-- Descreva o caminho completo de um lead/cliente pelo ecossistema -->
-1. 
-2. 
-3. 
+## Fluxo principal ponta a ponta (site → pagamento)
+
+Fluxo documentado a partir da página **`/assinar`** no site [site-alimentaai](https://github.com/Alimentaai-git/site-alimentaai):
+
+1. **Entrada**: utilizador abre `/assinar` ou `/assinatura`. Query opcional `?src=` (campanha) e `?ref=` (UUID de utilizador/lead já existente).
+2. **Validação de `ref`**: se `ref` for um UUID válido, o checkout pode prosseguir **sem** o mini-formulário de nome/WhatsApp.
+3. **Criação de lead** (quando não há `ref` válido): utilizador preenche **nome** e **WhatsApp** (normalização para dígitos BR); **POST** à Edge Function Supabase **`assinar-lead`** com header `apikey` (chave publishable) e corpo `telefone` / `user_name`; resposta deve incluir `refId` UUID.
+4. **Stripe Checkout**: front chama `startStripeCheckout` com ciclo de faturação (`monthly` | `quarterly` | `yearly`), `refId`/`ref`, `source`, etc.; browser é redirecionado para a URL de sessão Stripe.
+5. **Retorno**: sucesso → `/checkout/sucesso`. Cancelamento: Stripe pode devolver com `?checkout=canceled` — o site mostra toast “Pagamento não concluído” e remove o parâmetro da URL.
+
+Passos **fora** deste repositório (WhatsApp bot, n8n, webhooks Stripe no backend) devem ser descritos em `03-n8n/` e na documentação do Supabase quando existirem.
 
 ## Pontos de falha conhecidos
-<!-- Onde as integrações costumam quebrar -->
+
+- **`assinar-lead` indisponível ou erro**: checkout não abre; toast genérico no front.
+- **`ref` inválido** na URL: mensagem pedindo novo link de pagamento.
+- **Stripe / sessão**: falhas de rede ou configuração — utilizador vê “Não foi possível abrir o pagamento”.
+- **Variáveis `VITE_*` em falta**: analytics não carrega; WhatsApp de teste pode não abrir (`VITE_WHATSAPP_NUMBER` referenciado no fluxo de teste da app).
 
 ## Dependências críticas
-<!-- Se X cair, o que mais para? -->
+
+| Dependência | Impacto se cair |
+|-------------|-----------------|
+| Supabase (projeto + Functions) | Auth, dados, `assinar-lead`, URLs Edge |
+| Stripe | Impossível cobrar novas assinaturas via fluxo atual |
+| Domínio / hosting do site | Utilizadores não chegam ao funil |
+| Meta / GA4 | Perda de medição — **não** bloqueia o produto |
 
 ## Como usar o Brain como contexto em outros sistemas
 

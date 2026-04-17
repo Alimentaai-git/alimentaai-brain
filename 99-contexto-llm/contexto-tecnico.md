@@ -1,5 +1,5 @@
 # AlimentaAI — Contexto Técnico
-> Gerado em 2026-04-17 19:59 UTC
+> Gerado em 2026-04-17 20:09 UTC
 
 ---
 ## 02-site/STACK.md
@@ -7,15 +7,30 @@
 # Site — Stack
 
 ## Tecnologias
+
 | Tecnologia | Uso |
-|---|---|
-| | |
+|------------|-----|
+| Vite | Build e dev server (`vite`, `vite build`) |
+| React 18 | UI |
+| TypeScript | Tipagem |
+| react-router-dom | Rotas SPA |
+| Tailwind CSS | Estilos utilitários |
+| Radix UI / shadcn | Primitivos acessíveis (accordion, dialog, tabs, etc.) |
+| @supabase/supabase-js | Auth, dados, chamadas a APIs/Edge |
+| @tanstack/react-query | Cache e fetching |
+| react-hook-form + Zod | Formulários e validação |
+| Stripe | Checkout (sessão via `startStripeCheckout` no front) |
+| Font Awesome | Ícones na landing e fluxos |
+| Highcharts + Recharts | Gráficos no dashboard (dependências presentes) |
+| date-fns | Datas |
 
 ## Hospedagem e deploy
-<!-- Onde está hospedado, como faz deploy, domínio -->
+
+- O projeto é uma **SPA Vite**; o repositório **não fixa** URL pública de produção nem provedor (Vercel, Netlify, Cloudflare Pages, etc.). Documentar aqui quando a equipa tiver o domínio oficial e o pipeline de deploy.
 
 ## Repositório
-<!-- Link para o repo do site -->
+
+- Código fonte do site/app: **https://github.com/Alimentaai-git/site-alimentaai.git** (nome local do clone: `alimend-assist`).
 
 
 ---
@@ -60,13 +75,22 @@
 # Integrações — Stack
 
 ## Webhooks ativos
-| Endpoint | Origem | Destino | Evento |
-|---|---|---|---|
-| | | | |
+
+| Endpoint / origem | Origem | Destino | Evento |
+|---------------------|--------|---------|--------|
+| *A documentar no backend* | Stripe | Supabase / serviço interno | `checkout.session.completed`, etc. |
+| *A documentar* | WhatsApp / n8n | Supabase ou API | Mensagens e automações |
+
+O repositório **front** do site não lista webhooks servidor — completar esta tabela quando o backend estiver mapeado.
 
 ## Autenticação entre sistemas
-<!-- Como os sistemas se autenticam (sem colocar secrets aqui) -->
+
+- **Browser → Supabase**: `anon` / publishable key no cliente; sessão de utilizador via Supabase Auth.
+- **Browser → Edge Function `assinar-lead`**: header `apikey` com a mesma publishable key (padrão Supabase).
+- **Stripe Checkout**: sessão criada no servidor ou via função exposta ao cliente conforme implementação de `startStripeCheckout` — **sem** expor secret key no Brain.
 
 ## Onde ficam os secrets e API keys
-<!-- Vault, .env, serviço de secrets — NÃO coloque os valores aqui -->
+
+- Ficheiro **`.env`** local (gitignored) no projeto do site: `VITE_SUPABASE_URL`, `VITE_*` para analytics, `VITE_WHATSAPP_NUMBER`, etc.
+- **GitHub Secrets** / painel Supabase / Stripe Dashboard para produção — nunca commitar valores neste repositório Markdown.
 

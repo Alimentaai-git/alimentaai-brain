@@ -12,7 +12,7 @@ Dar ao modelo contexto completo do AlimentaAI para que qualquer resposta
 seja coerente com o produto, tom de voz, estratégia e decisões tomadas.
 
 ## Como usar no N8N
-1. Nó HTTP Request → GET `https://raw.githubusercontent.com/SEU-USER/alimentaai-brain/main/99-contexto-llm/contexto-completo.md`
+1. Nó HTTP Request → GET `https://raw.githubusercontent.com/Alimentaai-git/alimentaai-brain/main/99-contexto-llm/contexto-completo.md`
 2. Salve o resultado em uma variável `brain_context`
 3. No nó LLM seguinte, use o prompt abaixo substituindo `{brain_context}`
 

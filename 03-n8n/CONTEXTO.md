@@ -13,6 +13,6 @@
 ```
 Nó: HTTP Request
 Método: GET  
-URL: https://raw.githubusercontent.com/SEU-USER/alimentaai-brain/main/99-contexto-llm/contexto-completo.md
+URL: https://raw.githubusercontent.com/Alimentaai-git/alimentaai-brain/main/99-contexto-llm/contexto-completo.md
 ```
 Injete o resultado como system prompt em qualquer nó LLM do fluxo.

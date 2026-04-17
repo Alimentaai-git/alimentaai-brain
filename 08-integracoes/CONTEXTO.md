@@ -17,13 +17,13 @@
 ### No N8N
 ```
 Nó: HTTP Request → GET
-URL: https://raw.githubusercontent.com/SEU-USER/alimentaai-brain/main/99-contexto-llm/contexto-completo.md
+URL: https://raw.githubusercontent.com/Alimentaai-git/alimentaai-brain/main/99-contexto-llm/contexto-completo.md
 → Injete como system prompt no nó LLM seguinte
 ```
 
 ### Em qualquer sistema via API
 ```javascript
-const res = await fetch('https://raw.githubusercontent.com/SEU-USER/alimentaai-brain/main/99-contexto-llm/contexto-completo.md')
+const res = await fetch('https://raw.githubusercontent.com/Alimentaai-git/alimentaai-brain/main/99-contexto-llm/contexto-completo.md')
 const brain = await res.text()
 // use brain como system prompt
 ```

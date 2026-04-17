@@ -12,9 +12,9 @@ Esta pasta é **gerada automaticamente** pelo GitHub Actions a cada commit na ma
 | `contexto-tecnico.md` | Site + N8N + Infra + Integrações | Problemas técnicos, arquitetura |
 | `contexto-marketing.md` | Identidade + Marketing + Clientes | Copywriting, campanhas, personas |
 
-## URL base para fetch (substitua SEU-USER)
+## URL base para fetch
 ```
-https://raw.githubusercontent.com/SEU-USER/alimentaai-brain/main/99-contexto-llm/ARQUIVO.md
+https://raw.githubusercontent.com/Alimentaai-git/alimentaai-brain/main/99-contexto-llm/ARQUIVO.md
 ```
 
 ## Exemplo de uso no N8N

@@ -11,13 +11,14 @@ Serve como **fonte da verdade única** para produto, tecnologia, marketing e ope
 | Buscar contexto no n8n | HTTP GET na URL raw de qualquer arquivo |
 | Registrar uma decisão | Use o template em `12-decisoes/_template.md` |
 | Entender uma área | Leia `MAPA.md` → `CONTEXTO.md` → `STACK.md` da área |
+| Git: branches, PRs, commits | Ver `04-infraestrutura/REPOS-E-FLUXO-GIT.md` |
 
 ## Ecossistema
 
 | Sistema | Repositório | Descrição |
 |---|---|---|
 | 🧠 Brain (este) | alimentaai-brain | Contexto e decisões |
-| 🌐 Site | alimentaai-site | Landing e checkout |
+| 🌐 Site | site-alimentaai | Landing e checkout |
 | ⚙️ Automações | alimentaai-n8n | Fluxos n8n |
 | 📣 Marketing | alimentaai-marketing | Estratégia e identidade visual |
 
@@ -48,6 +49,8 @@ Toda área segue o mesmo padrão de 3 arquivos:
 | 99 | Contexto LLM | Arquivos gerados automaticamente para injetar em LLMs |
 
 ## Convenção de commits
+
+Exemplos rápidos (Brain). Tipos por repo e cenários do dia a dia: **`04-infraestrutura/REPOS-E-FLUXO-GIT.md`**.
 
 ```
 feat(produto): adiciona feature X

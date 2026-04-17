@@ -1,6 +1,6 @@
 # AlimentaAI — Contexto Completo
 
-> Gerado automaticamente em 2026-04-17 20:09 UTC
+> Gerado automaticamente em 2026-04-17 23:13 UTC
 > **Não edite este arquivo diretamente.** Edite os arquivos fonte nas pastas 00-12.
 
 
@@ -210,6 +210,11 @@ Fluxo alternativo: `/comece-agora` → recolha de dados → continuação para a
 
 Não documentar valores secretos de API no Brain — apenas nomes de variáveis e comportamento.
 
+## Automação WhatsApp (fora do código do site)
+
+O atendimento por WhatsApp (Evolution / UAZAPI → n8n → Supabase / LLM) está documentado na pasta **`03-n8n/`**.  
+Export sanitizado do workflow (JSON): [`workflow-export.json`](../03-n8n/workflow-export.json) — **sem** `pinData`, chaves `sk-*` nem tokens de instância; credenciais devem existir só no n8n.
+
 
 ---
 ## 02-site/CONTEXTO.md
@@ -245,12 +250,48 @@ Não documentar valores secretos de API no Brain — apenas nomes de variáveis 
 # N8N — Mapa
 
 ## Fluxos ativos
-| Fluxo | Gatilho | O que faz | Status |
-|---|---|---|---|
-| | | | ✅ Ativo |
 
-## Diagrama de automações
-<!-- Como os fluxos se conectam entre si e com outros sistemas -->
+| Fluxo | Gatilho | O que faz | Status |
+|-------|---------|-----------|--------|
+| Atendimento WhatsApp (mensagens) | Webhook HTTP (payload Evolution / UAZAPI) | Normaliza mensagem → Redis (buffer) → Supabase (cliente) → ramo texto vs imagem → agente LangChain (`agente_refeicao`) com ferramentas Supabase / RAG → HTTP resposta WhatsApp | Ativo (export em `workflow-export.json`) |
+| Webhook auxiliar | Segundo webhook no mesmo workflow | Ex.: eventos ou modos (`cadastro_feito`, macros) — rever nós ligados no editor n8n | Ativo |
+
+## Diagrama (visão lógica)
+
+```mermaid
+flowchart LR
+  evo[Evolution_UAZAPI]
+  wh[Webhook_n8n]
+  norm[Set_Code_filtros]
+  redis[Redis_buffer]
+  sup[Supabase_cliente]
+  img[Gemini_imagem]
+  agent[LangChain_agent_OpenRouter]
+  tools[Supabase_tools_RAG]
+  out[HTTP_resposta_WA]
+  evo --> wh --> norm --> redis
+  norm --> sup
+  norm --> img
+  redis --> agent
+  sup --> agent
+  tools --> agent
+  agent --> out
+```
+
+## Export do workflow
+
+- Ficheiro sanitizado (referência técnica): [`workflow-export.json`](./workflow-export.json)  
+- Contém nós, ligações e metadados do n8n; **não** incluir de novo chaves API ou `pinData` ao reexportar — usar credenciais nativas do n8n.
+
+## Diagrama de automações (texto)
+
+1. **Entrada**: webhooks recebem JSON (cabeçalhos `uazapiGO-Webhook/1.0` no tráfego real típico) com `BaseUrl` da API, `instanceName`, `token` da instância, `message` / `chat`.
+2. **Normalização**: nó `camposIniciais` e outros `Set` mapeiam meta (`telefoneCliente`, `nomeCliente`, etc.); `Code in JavaScript` ignora mensagens `wasSentByApi` / `fromMe`.
+3. **Buffer**: Redis agrega mensagens por `telefone` + esperas (`Wait`) para processar em lote.
+4. **Cliente**: Supabase (`getClient`, …) credencial **Alimentaai**.
+5. **Multimodal**: ficheiro / imagem → `Convert to File` → **Google Gemini** (`Analyze image1`); texto → agente com **OpenRouter** (`OpenRouter Chat Model`, modelo `google/gemini-2.5-flash`).
+6. **Agente**: `agente_refeicao` com memória Postgres (`Postgres Chat Memory`, `Chat Memory Manager`) e ferramentas (`registrar_refeicao` na tabela `refeicoes`, vector store Supabase, embeddings).
+7. **Saída**: `Responde texto` e outros `HTTP Request` para API de envio (Evolution / UAZAPI).
 
 
 ---
@@ -259,21 +300,35 @@ Não documentar valores secretos de API no Brain — apenas nomes de variáveis 
 # N8N — Contexto
 
 ## Por que n8n
-<!-- Decisão de usar n8n e não outra ferramenta -->
+
+Orquestração visual de **WhatsApp (Evolution / UAZAPI)** com **Redis** (debounce / fila curta), **Supabase** (dados e vector store), **vários LLMs** (Gemini para imagem, OpenRouter para chat do agente, OpenAI para embeddings no RAG) e **Postgres** para memória de conversa — num único fluxo versionável.
 
 ## Fluxos mais críticos
-<!-- Os que não podem parar de jeito nenhum -->
+
+- **Webhook principal de mensagens**: se falhar, o cliente não recebe resposta automática.
+- **Agente `agente_refeicao` + ferramentas Supabase** (ex.: persistência em `refeicoes`): núcleo do produto “macros por refeição”.
+- **Redis** na agregação de mensagens: se Redis estiver indisponível ou com TTL errado, mensagens podem fragmentar-se ou atrasar-se.
 
 ## Pontos de atenção
-<!-- Fluxos instáveis, limitações conhecidas, débitos -->
+
+- **Credenciais**: nunca embutir `sk-` ou tokens de instância no JSON exportado — usar **Credentials** do n8n e reexportar sem segredos (como em `workflow-export.json`).
+- **Custos**: cada mensagem pode acionar Gemini, OpenRouter e embeddings; monitorizar quotas.
+- **Dependências externas**: Supabase, Redis, host UAZAPI (`BaseUrl` típico `https://alimentaai.uazapi.com` no payload), e instância Evolution devem estar saudáveis em cadeia.
+- **Manutenção**: nós placeholder (`Replace Me`, `No Operation`) devem ser tratados ou removidos no editor.
 
 ## Como buscar contexto do Brain no n8n
+
 ```
 Nó: HTTP Request
 Método: GET  
 URL: https://raw.githubusercontent.com/Alimentaai-git/alimentaai-brain/main/99-contexto-llm/contexto-completo.md
 ```
+
 Injete o resultado como system prompt em qualquer nó LLM do fluxo.
+
+## Segurança (lembrete)
+
+Se um export antigo continha **chaves ou PII**, rodar as chaves no fornecedor e **não** voltar a commitar `pinData` nem API keys em nós `Set`.
 
 
 ---
@@ -282,14 +337,26 @@ Injete o resultado como system prompt em qualquer nó LLM do fluxo.
 # Infraestrutura — Mapa
 
 ## Arquitetura geral
-<!-- Diagrama ou descrição de como tudo está hospedado -->
+
+| Componente | Função | Notas |
+|--------------|--------|--------|
+| **Site (SPA)** | Landing, auth, dashboard, checkout | Vite/React — ver `02-site/STACK.md`; hosting público a documentar quando fixo |
+| **Supabase** | Postgres, Auth, Edge Functions, Storage (conforme projeto) | Usado pelo site e pelo n8n |
+| **Stripe** | Pagamentos | Checkout a partir do site |
+| **n8n** | Orquestração WhatsApp + LLM | Self-hosted; padrão de deploy observado: **Easypanel** (`*.easypanel.host` para webhooks) |
+| **Redis** | Buffer de mensagens no fluxo n8n | Credencial “Redis account” no n8n |
+| **Evolution / UAZAPI** | Camada WhatsApp | Ex.: `BaseUrl` `https://alimentaai.uazapi.com` no payload típico (domínio de produto, não segredo) |
+| **LLM externos** | OpenRouter, Google Gemini, OpenAI | Chamados a partir do n8n |
+
+Diagrama lógico alinhado a `03-n8n/MAPA.md` e `08-integracoes/MAPA.md`.
 
 ## Ambientes
+
 | Ambiente | URL | Uso |
-|---|---|---|
-| Produção | | |
-| Staging | | |
-| Dev | | |
+|----------|-----|-----|
+| Produção | *A preencher* (domínio do site + projeto Supabase) | Tráfego real |
+| Staging | *Opcional* | Testes |
+| Dev | `localhost` (site); n8n pode usar execução manual / webhooks de teste | Desenvolvimento |
 
 
 ---
@@ -298,15 +365,27 @@ Injete o resultado como system prompt em qualquer nó LLM do fluxo.
 # Infraestrutura — Contexto
 
 ## Decisões de arquitetura
-<!-- Por que cada serviço foi escolhido -->
+
+- **Supabase** como backend único para dados e funções serverless consumidas pelo site e referenciadas no n8n.
+- **n8n self-hosted** (Easypanel) para colar **WhatsApp ↔ Redis ↔ LLM ↔ Supabase** sem deployar lógica pesada no site estático.
+- **Redis** dedicado ao debounce / fila curta de mensagens no fluxo WhatsApp (não substitui o Postgres do Supabase).
 
 ## Custos mensais
+
 | Serviço | Custo | Renovação |
-|---|---|---|
-| | | |
+|---------|-------|-----------|
+| Supabase | *A preencher* | |
+| Stripe | % + fixo conforme faturação | |
+| n8n / Easypanel / VPS | *A preencher* | |
+| Redis | *A preencher* | |
+| UAZAPI / Evolution | *A preencher* | |
+| OpenRouter + Gemini + OpenAI | *A preencher* (uso variável) | |
 
 ## Pontos de atenção
-<!-- Gargalos, riscos, débito técnico -->
+
+- **Segurança**: exports do n8n não devem conter `pinData` com PII nem chaves `sk-*` — ver incidente corrigido com `03-n8n/workflow-export.json` sanitizado.
+- **Disponibilidade**: webhook n8n é **ponto único** de entrada da automação WhatsApp; monitorizar uptime e TLS.
+- **Rotação de segredos**: qualquer chave que tenha estado em Git público deve ser **rotacionada** no fornecedor.
 
 
 ---
@@ -518,28 +597,47 @@ Tema **`.dark`**: ver mesmo ficheiro no site para valores noturnos.
 ## Diagrama do ecossistema
 
 ```
-[SITE] ──webhook──► [N8N] ──api──► [LLM / IA]
-  │                   │
-  │                   ├──────────► [CRM / Email]
-  │                   └──────────► [Notificações]
-  │
-  ├──────────────────────────────► [Analytics]
-  └──────────────────────────────► [Pagamentos]
+[Visitante] ──► [Site SPA] ──► [Stripe] + [Supabase Edge]
+                    │
+                    └──► [Meta / GA4]
 
-[BRAIN] ◄──── contexto para todos os sistemas via raw URL
+[WhatsApp] ◄──► [Evolution / UAZAPI] ──webhook──► [n8n]
+                                              │
+                    ┌─────────────────────────┼─────────────────────────┐
+                    ▼                         ▼                         ▼
+              [Redis buffer]            [Supabase DB + Vector]     [OpenRouter / Gemini / OpenAI]
+                    │                         │
+                    └────────► [LLM Agent] ◄───┘
+                                    │
+                                    └──► [HTTP] ──► [Evolution / UAZAPI] ──► [WhatsApp]
+
+[BRAIN] ◄──── contexto para LLM (raw GitHub URL) ◄── usado pelo n8n e outros
 ```
 
 ## Mapa de integrações
+
 | De | Para | O que passa | Como | Crítico? |
-|---|---|---|---|---|
-| Site | N8N | Lead capturado | Webhook | ✅ Sim |
-| N8N | LLM | Prompt + contexto | API REST | ✅ Sim |
-| | | | | |
+|----|------|-------------|------|----------|
+| Site | Supabase | Auth, dados, `assinar-lead` | HTTPS + anon key | Sim |
+| Site | Stripe | Checkout de plano | Redirect sessão | Sim |
+| Site | Meta / GA4 | Eventos de funil | Browser + `VITE_*` | Não |
+| Evolution / UAZAPI | n8n | Payload mensagem / instância | Webhook POST JSON | Sim |
+| n8n | Redis | Mensagens agregadas por chave | Redis protocol | Sim |
+| n8n | Supabase | Queries, tools, vector store | REST / API Supabase | Sim |
+| n8n | OpenRouter / Google / OpenAI | Prompts, imagem, embeddings | HTTPS API | Sim |
+| n8n | Evolution / UAZAPI | Envio de texto / mídia | HTTP Request | Sim |
+| n8n | Brain (GitHub raw) | `contexto-completo.md` | GET HTTP | Recomendado para qualidade das respostas |
 
 ## APIs externas
+
 | API | Uso | Quem chama | Documentação |
-|---|---|---|---|
-| | | | |
+|-----|-----|------------|----------------|
+| Supabase | DB, Auth, Edge Functions, Storage (conforme projeto) | Site, n8n | docs.supabase.com |
+| Stripe | Pagamentos | Site | stripe.com/docs |
+| UAZAPI / Evolution | WhatsApp Business API layer | n8n | Documentação do fornecedor UAZAPI |
+| OpenRouter | Chat completions | n8n (LangChain) | openrouter.ai |
+| Google Gemini | Visão / imagem | n8n | Google AI |
+| OpenAI | Embeddings | n8n | platform.openai.com |
 
 
 ---
@@ -559,6 +657,20 @@ Fluxo documentado a partir da página **`/assinar`** no site [site-alimentaai](h
 
 Passos **fora** deste repositório (WhatsApp bot, n8n, webhooks Stripe no backend) devem ser descritos em `03-n8n/` e na documentação do Supabase quando existirem.
 
+## Mensagens WhatsApp (automação)
+
+Fluxo de alto nível documentado a partir do export em [`03-n8n/workflow-export.json`](../03-n8n/workflow-export.json):
+
+1. **Evolution / UAZAPI** envia **POST** para o webhook do n8n com corpo JSON (`EventType`, `BaseUrl`, `instanceName`, dados de `chat` e `message`, etc.).
+2. **Normalização**: nós `Set` / `Code` extraem telefone, texto, tipo de mensagem e ignoram mensagens enviadas pela própria API ou pelo “eu” (`fromMe` / `wasSentByApi`).
+3. **Redis**: leitura/escrita de mensagens por telefone e esperas controladas para agrupar burst de texto.
+4. **Supabase**: obtenção do registo de cliente (`getClient` e variantes) com credencial de projeto **Alimentaai**.
+5. **Ramificação**: mensagem de **imagem** (ou mídia) segue conversão e análise com **Google Gemini**; mensagem de **texto** segue para o agente **LangChain** (`agente_refeicao`) com modelo via **OpenRouter** (`google/gemini-2.5-flash`).
+6. **Memória e ferramentas**: Postgres (memória de chat), ferramentas Supabase (ex.: `registrar_refeicao` na tabela `refeicoes`), vector store + embeddings para RAG.
+7. **Resposta**: pedidos HTTP de volta à API UAZAPI/Evolution para o utilizador receber mensagem no WhatsApp.
+
+Tokens de instância e chaves de API **não** devem aparecer em repositórios — apenas no n8n **Credentials** e nos serviços de origem.
+
 ## Pontos de falha conhecidos
 
 - **`assinar-lead` indisponível ou erro**: checkout não abre; toast genérico no front.
@@ -574,6 +686,9 @@ Passos **fora** deste repositório (WhatsApp bot, n8n, webhooks Stripe no backen
 | Stripe | Impossível cobrar novas assinaturas via fluxo atual |
 | Domínio / hosting do site | Utilizadores não chegam ao funil |
 | Meta / GA4 | Perda de medição — **não** bloqueia o produto |
+| n8n (webhooks) | Automatização WhatsApp para de responder |
+| Redis (buffer n8n) | Mensagens podem duplicar-se ou atrasar-se |
+| Evolution / UAZAPI | Entrada e saída de WhatsApp indisponíveis |
 
 ## Como usar o Brain como contexto em outros sistemas
 

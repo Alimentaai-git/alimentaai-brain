@@ -1,0 +1,238 @@
+---
+alwaysApply: true
+---
+# 🧠 AlimentaAI — Segundo Cérebro (Cursor Rules)
+
+Você está trabalhando no ecossistema **AlimentaAI**. Leia e aplique este contexto em TODAS as respostas.
+
+### Prioridade de contexto (sempre)
+
+- **Fonte da verdade** para produto, preços, stack, n8n, copy e decisões: o repositório **`alimentaai-brain`** (Markdown nas pastas `00`–`12`). Em caso de divergência entre este ficheiro e o Brain, **prevalece o Brain** até alguém alinhar os dois.
+- **Síntese longa para LLM**: `alimentaai-brain/99-contexto-llm/contexto-completo.md` (ou os contextos parciais listados na secção **URL do Brain para injetar em LLMs** no fim deste ficheiro).
+- **Git, branches, nomes de repos e fluxo de trabalho**: `alimentaai-brain/04-infraestrutura/REPOS-E-FLUXO-GIT.md`.
+
+---
+
+## O que é o AlimentaAI
+
+Serviço de **nutrição e hábito alimentar assistidos por IA**, com foco no **WhatsApp** como canal principal de conversa e ajuste de plano, complementado por **painel web** para metas e histórico. Interpreta **refeições a partir de fotos** e texto. Planos pagos com **Stripe**; auth e dados com **Supabase**.
+
+**Posicionamento**: "Nutricionista no bolso" via WhatsApp — menos de R$ 1 por dia como âncora, 100% no WhatsApp, teste grátis sem cartão, sem fidelidade.
+
+---
+
+## Ecossistema e repositórios
+
+| Repo | O que é | Stack principal |
+|------|---------|-----------------|
+| `site-alimentaai` | SPA landing + auth + dashboard + checkout | React 18, Vite, TypeScript, Tailwind, shadcn/Radix, Supabase JS, Stripe, TanStack Query |
+| `alimentaai-brain` | Este segundo cérebro — contexto e decisões | Markdown, GitHub Actions |
+| n8n (Easypanel) | Automação WhatsApp + LLM | n8n self-hosted, Evolution/UAZAPI, Redis, Supabase, OpenRouter, Gemini, OpenAI |
+
+**Repositório do site**: https://github.com/Alimentaai-git/site-alimentaai  
+**Brain**: https://github.com/Alimentaai-git/alimentaai-brain
+
+---
+
+## Stack do site (detalhado)
+
+```
+React 18 + Vite + TypeScript
+Tailwind CSS com tokens HSL em src/index.css
+shadcn/ui + Radix UI (accordion, dialog, tabs, toast)
+@supabase/supabase-js ^2.76.1
+@tanstack/react-query ^5.83.0
+react-hook-form + Zod
+Stripe (checkout via startStripeCheckout)
+Font Awesome (ícones)
+Highcharts + Recharts (dashboard)
+date-fns
+```
+
+**Variáveis de ambiente (VITE_*)**:
+- `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+- `VITE_META_PIXEL_ID`, `VITE_GA4_MEASUREMENT_ID`
+- `VITE_WHATSAPP_NUMBER`
+- Stripe keys via Supabase Edge Functions (não no front diretamente)
+
+---
+
+## Identidade visual
+
+**Paleta (tokens HSL no Tailwind)**:
+| Token | HSL | Uso |
+|-------|-----|-----|
+| `--primary` | `160 84% 39%` | Verde-teal, marca, CTAs |
+| `--secondary` | `160 61% 65%` | Gradientes, apoio |
+| `--accent` | `160 100% 45%` | Destaques |
+| `--background` | `0 0% 100%` | Fundo claro |
+| `--foreground` | `160 84% 8%` | Texto principal |
+| `--destructive` | `0 84.2% 60.2%` | Erros |
+
+**Tipografia**: Inter (Google Fonts, 300–900)  
+**Gradientes de marca**: `from-primary to-secondary`  
+**Logo**: `GIF/logo_alimentaai_180_png.png` no root do site  
+**Tom visual**: moderno, saúde/digital, sem "clínico frio"
+
+---
+
+## Rotas do site
+
+```
+/                     → Landing (hero, demos WhatsApp, FAQ, CTAs)
+/auth                 → Login/registro
+/comece-agora         → Onboarding do lead
+/dashboard            → Área logada
+/planos               → Catálogo de planos
+/assinar | /assinatura → Checkout Stripe
+/checkout/sucesso     → Pós-pagamento
+/onboarding/revisao   → Pós-compra
+/onboarding/ativar-teste → Ativação de teste
+/politica-de-privacidade
+/termos-de-uso
+```
+
+---
+
+## Planos e preços (PLAN_CATALOG)
+
+| Plano | Código | Valor | Stripe content_id |
+|-------|--------|-------|-------------------|
+| Mensal | `monthly` | R$ 27,90 | `alimentaai_plan_monthly` |
+| Trimestral | `quarterly` | R$ 75,90 | `alimentaai_plan_quarterly` |
+| Anual | `yearly` | R$ 229,90 | `alimentaai_plan_yearly` |
+
+Âncora de marketing: trimestral = "menos de R$ 1 por dia" (75,90 ÷ 90).
+
+---
+
+## Fluxo de checkout
+
+1. Usuário acessa `/assinar`
+2. Se não houver `?ref=UUID` válido → coleta nome + WhatsApp → POST para Edge Function `assinar-lead` → recebe `refId`
+3. Front chama `startStripeCheckout` com ciclo + refId
+4. Browser vai para Stripe Checkout
+5. Sucesso → `/checkout/sucesso` | Cancelamento → `?checkout=canceled` (toast + limpa URL)
+
+---
+
+## Automação WhatsApp (n8n)
+
+**Fluxo principal**:
+```
+Evolution/UAZAPI → Webhook n8n
+→ Code (filtra fromMe/wasSentByApi)
+→ camposIniciais (Set: telefone, nome, tipo, idMensagem)
+→ Code (normaliza telefone BR E.164)
+→ getClient (Supabase: tabela usuarios)
+→ getSubscribe (Supabase: tabela user_subscriptions)
+→ mensagem_tipo (Switch: Conversation | AudioMessage | ImageMessage)
+→ [texto] edit → Redis buffer → Wait → agente_refeicao
+→ [audio] Obter mídia → transcrição UAZAPI → Redis buffer
+→ [imagem] Download base64 → Gemini análise → Redis buffer
+→ Switch (Não Cadastrado | Active | Trial | Expirado)
+→ prompt_* (Set com system prompt)
+→ agente_refeicao (LangChain Agent, OpenRouter gemini-2.5-flash)
+   tools: registrar_refeicao, consultar_refeicao_diario,
+          consultar_metas_macros, excluir_refeicao,
+          buscar_alimento_taco (vector store), marcar_tbf_concluido
+→ Edit Fields5 → Split Out → Loop → Wait1 → Responde texto4
+```
+
+**Serviços do n8n**:
+- WhatsApp: Evolution/UAZAPI (`https://alimentaai.uazapi.com`)
+- Buffer: Redis (debounce 4s por telefone)
+- Dados: Supabase (credencial "Alimentaai")
+- LLM chat: OpenRouter (`google/gemini-2.5-flash`, temp 0.3)
+- LLM imagem: Google Gemini (`models/gemini-2.5-flash`)
+- Embeddings/RAG: OpenAI + Supabase Vector Store (`alimentos_taco`)
+- Memória: Postgres (`n8n_chat_histories_nutriAI`, janela 6 msgs)
+- Hosting: Easypanel
+
+**Tabelas Supabase relevantes**:
+`usuarios`, `user_subscriptions`, `refeicoes`, `metas_macros`, `n8n_chat_histories_nutriAI`, `tbf_interactions`, `alimentos_taco`
+
+---
+
+## Decisões arquiteturais tomadas
+
+- Supabase como backend único (dados + auth + Edge Functions)
+- n8n self-hosted no Easypanel para colar WhatsApp ↔ Redis ↔ LLM ↔ Supabase
+- Redis só para debounce/fila curta (não substitui Postgres)
+- Checkout Stripe com sessão criada no cliente via helper dedicado
+- Lead capturado antes do pagamento via Edge Function `assinar-lead`
+- Tracking (Meta + GA4) alinhado ao `PLAN_CATALOG` para consistência de eventos
+- Brain no GitHub como fonte da verdade — injetado via URL raw em LLMs e n8n
+
+---
+
+## Tom de voz do produto
+
+- Brasileiro, direto e acolhedor: "beleza", "sem culpa", celebração de pequenas vitórias
+- Motivador sem vergonha: erros viram ajuste, não julgamento
+- Evitar: tom corporativo frio, jargão médico excessivo, promessas milagrosas
+- NÃO somos substituto de médico/nutricionista presencial
+
+---
+
+## Regras obrigatórias para o Cursor
+
+### Ao sugerir qualquer mudança de código
+1. Verificar se há decisão técnica relacionada em `alimentaai-brain/12-decisoes/`
+2. Manter consistência com os tokens HSL da paleta — nunca hardcodar cores
+3. Usar `hsl(var(--token))` para cores, nunca valores fixos
+4. Seguir o padrão shadcn/Radix para novos componentes
+
+### Ao criar ou alterar componentes do site
+- Mobile-first sempre
+- Gradientes via `from-primary to-secondary` ou variantes
+- Ícones via Font Awesome (não Lucide, não Heroicons)
+- Formulários com react-hook-form + Zod
+
+### Ao mexer no fluxo de pagamento
+- Nunca expor chaves Stripe no front
+- Sempre usar `PLAN_CATALOG` como fonte dos valores — nunca hardcodar preços
+- `content_id` para eventos Meta/GA4 deve vir do `PLAN_CATALOG`
+
+### Ao mexer no n8n ou automações
+- Nunca salvar credenciais em nós Set ou pinData
+- Exports devem ter tokens redacted: `[REDACTED_INSTANCE_TOKEN]`
+- Documentar mudanças em `alimentaai-brain/03-n8n/`
+
+### Ao tomar decisões importantes
+Perguntar: **"Devo registrar isso em `alimentaai-brain/12-decisoes/`?"**
+Critério: tem efeito duradouro? tem trade-off? afeta stack, preço ou processo?
+
+### Ao alterar qualquer área do produto
+Atualizar o arquivo `.md` correspondente no Brain:
+| Mudança em | Atualizar no Brain |
+|------------|-------------------|
+| Features, UX, checkout | `01-produto/` e `02-site/` |
+| Stack, deploy, infra | `04-infraestrutura/` |
+| Preços, planos | `01-produto/precos/` |
+| Automações n8n | `03-n8n/` |
+| Copy, identidade visual | `05-marketing/` e `00-identidade/` |
+| Prompts LLM | `11-prompts/` |
+
+---
+
+## Segurança — nunca fazer
+
+- ❌ Commitar `.env` ou qualquer `VITE_*` com valor real
+- ❌ Colocar `sk-`, tokens de instância ou API keys em Markdown do Brain
+- ❌ Incluir `pinData` em exports do n8n
+- ❌ Hardcodar preços fora do `PLAN_CATALOG`
+- ❌ Expor `supabaseServiceKey` no front
+
+---
+
+## URL do Brain para injetar em LLMs
+
+```
+https://raw.githubusercontent.com/Alimentaai-git/alimentaai-brain/main/99-contexto-llm/contexto-completo.md
+```
+
+Contextos específicos:
+- Produto: `.../contexto-produto.md`
+- Técnico: `.../contexto-tecnico.md`
+- Marketing: `.../contexto-marketing.md`

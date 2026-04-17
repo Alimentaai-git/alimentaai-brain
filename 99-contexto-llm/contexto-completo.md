@@ -1,6 +1,6 @@
 # AlimentaAI — Contexto Completo
 
-> Gerado automaticamente em 2026-04-17 23:13 UTC
+> Gerado automaticamente em 2026-04-17 23:46 UTC
 > **Não edite este arquivo diretamente.** Edite os arquivos fonte nas pastas 00-12.
 
 
@@ -357,6 +357,10 @@ Diagrama lógico alinhado a `03-n8n/MAPA.md` e `08-integracoes/MAPA.md`.
 | Produção | *A preencher* (domínio do site + projeto Supabase) | Tráfego real |
 | Staging | *Opcional* | Testes |
 | Dev | `localhost` (site); n8n pode usar execução manual / webhooks de teste | Desenvolvimento |
+
+## Git e repositórios
+
+Proteção da `main` do site, branch `dev`, repos `alimentaai-n8n` / `alimentaai-marketing` e convenção de commits: [**REPOS-E-FLUXO-GIT.md**](REPOS-E-FLUXO-GIT.md).
 
 
 ---

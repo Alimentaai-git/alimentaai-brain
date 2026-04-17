@@ -1,5 +1,5 @@
 # AlimentaAI — Contexto Técnico
-> Gerado em 2026-04-17 23:13 UTC
+> Gerado em 2026-04-17 23:46 UTC
 
 ---
 ## 02-site/STACK.md

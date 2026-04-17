@@ -1,0 +1,111 @@
+name: 🧠 Build Contexto LLM
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '99-contexto-llm/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Montar contexto-completo.md
+        run: |
+          OUTPUT="99-contexto-llm/contexto-completo.md"
+          echo "# AlimentaAI — Contexto Completo" > $OUTPUT
+          echo "" >> $OUTPUT
+          echo "> Gerado automaticamente em $(date -u '+%Y-%m-%d %H:%M UTC')" >> $OUTPUT
+          echo "> **Não edite este arquivo diretamente.** Edite os arquivos fonte nas pastas 00-12." >> $OUTPUT
+          echo "" >> $OUTPUT
+
+          FILES=(
+            "00-identidade/MAPA.md"
+            "00-identidade/CONTEXTO.md"
+            "01-produto/MAPA.md"
+            "01-produto/CONTEXTO.md"
+            "01-produto/precos/CONTEXTO.md"
+            "02-site/MAPA.md"
+            "02-site/CONTEXTO.md"
+            "03-n8n/MAPA.md"
+            "03-n8n/CONTEXTO.md"
+            "04-infraestrutura/MAPA.md"
+            "04-infraestrutura/CONTEXTO.md"
+            "05-marketing/MAPA.md"
+            "05-marketing/CONTEXTO.md"
+            "05-marketing/STACK.md"
+            "06-clientes/MAPA.md"
+            "06-clientes/CONTEXTO.md"
+            "07-metricas/MAPA.md"
+            "07-metricas/CONTEXTO.md"
+            "08-integracoes/MAPA.md"
+            "08-integracoes/CONTEXTO.md"
+            "09-operacional/MAPA.md"
+            "09-operacional/CONTEXTO.md"
+            "09-operacional/STACK.md"
+            "10-roadmap/MAPA.md"
+            "10-roadmap/CONTEXTO.md"
+            "11-prompts/CONTEXTO.md"
+            "12-decisoes/MAPA.md"
+            "12-decisoes/CONTEXTO.md"
+          )
+
+          for file in "${FILES[@]}"; do
+            if [ -f "$file" ]; then
+              echo "" >> $OUTPUT
+              echo "---" >> $OUTPUT
+              echo "## $file" >> $OUTPUT
+              echo "" >> $OUTPUT
+              cat "$file" >> $OUTPUT
+              echo "" >> $OUTPUT
+            fi
+          done
+
+          # Adiciona as últimas 5 decisões
+          echo "" >> $OUTPUT
+          echo "---" >> $OUTPUT
+          echo "## Decisões Recentes" >> $OUTPUT
+          ls -t 12-decisoes/*.md 2>/dev/null | grep -E '12-decisoes/[0-9]{4}-[0-9]{2}-[0-9]{2}-' | head -5 | while read f; do
+            echo "" >> $OUTPUT
+            echo "### $f" >> $OUTPUT
+            cat "$f" >> $OUTPUT
+          done
+
+      - name: Montar contexto-tecnico.md
+        run: |
+          OUTPUT="99-contexto-llm/contexto-tecnico.md"
+          echo "# AlimentaAI — Contexto Técnico" > $OUTPUT
+          echo "> Gerado em $(date -u '+%Y-%m-%d %H:%M UTC')" >> $OUTPUT
+          for f in 02-site/STACK.md 03-n8n/STACK.md 04-infraestrutura/STACK.md 08-integracoes/STACK.md; do
+            [ -f "$f" ] && { echo ""; echo "---"; echo "## $f"; echo ""; cat "$f"; echo ""; } >> $OUTPUT
+          done
+
+      - name: Montar contexto-marketing.md
+        run: |
+          OUTPUT="99-contexto-llm/contexto-marketing.md"
+          echo "# AlimentaAI — Contexto Marketing" > $OUTPUT
+          echo "> Gerado em $(date -u '+%Y-%m-%d %H:%M UTC')" >> $OUTPUT
+          for f in 00-identidade/CONTEXTO.md 05-marketing/MAPA.md 05-marketing/CONTEXTO.md 06-clientes/MAPA.md; do
+            [ -f "$f" ] && { echo ""; echo "---"; echo "## $f"; echo ""; cat "$f"; echo ""; } >> $OUTPUT
+          done
+
+      - name: Montar contexto-produto.md
+        run: |
+          OUTPUT="99-contexto-llm/contexto-produto.md"
+          echo "# AlimentaAI — Contexto Produto" > $OUTPUT
+          echo "> Gerado em $(date -u '+%Y-%m-%d %H:%M UTC')" >> $OUTPUT
+          for f in 01-produto/MAPA.md 01-produto/CONTEXTO.md 01-produto/precos/MAPA.md 10-roadmap/MAPA.md; do
+            [ -f "$f" ] && { echo ""; echo "---"; echo "## $f"; echo ""; cat "$f"; echo ""; } >> $OUTPUT
+          done
+
+      - name: Commit e push dos contextos
+        run: |
+          git config user.name "alimentaai-brain-bot"
+          git config user.email "brain@alimentaai.com"
+          git add 99-contexto-llm/
+          git diff --staged --quiet || git commit -m "chore(brain): atualiza contextos LLM [skip ci]"
+          git push

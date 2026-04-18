@@ -8,7 +8,7 @@ Guia operacional para a organização **Alimentaai-git** no GitHub. Passos marca
 |-------------|--------|------------|
 | `alimentaai-brain` | Fonte da verdade (Markdown) | `main` apenas — commit direto |
 | `site-alimentaai` | SPA React (Vite) | `main` (produção), `dev` (integração), `feat/*`, `fix/*` |
-| `alimentaai-n8n` | Export sanitizado do workflow | `main` apenas |
+| `alimentaai-n8n` | Exports JSON dos workflows (atendimento + remarketing, etc.) | `main` apenas |
 | `alimentaai-marketing` | Assets e estratégia (fora do Brain quando fizer sentido) | `main` (ajustar conforme necessidade) |
 
 Criar na org (se ainda não existirem): **New repository** → nome exato → visibilidade à escolha → sem README se já tens clone local (ou com README e depois `git pull --rebase` antes do primeiro push).
@@ -62,21 +62,23 @@ git pull origin main --allow-unrelated-histories
 git push -u origin main
 ```
 
-## 4. Export n8n (`workflow-export.json`)
+## 4. Exports n8n (repo `alimentaai-n8n`)
 
-1. Exportar o workflow no n8n **sem** `pinData` e **sem** credenciais em texto claro.
-2. Substituir `workflow-export.json` na raiz do repo `alimentaai-n8n`.
-3. Antes de commitar (PowerShell):
+1. No editor n8n: **exportar cada workflow relevante** (atendimento **ALIMENTAAI - NOVO**, remarketing, etc.) **sem** `pinData` e **sem** credenciais em texto claro.
+2. Gravar os JSON na raiz do repo (naming típico `{workflowId}-{nome}.json`, como nos ficheiros já versionados). O ficheiro `workflow-export.json` na raiz do repo n8n pode permanecer como placeholder ou ser alinhado ao fluxo principal — a **referência rica** para prompts continua documentada em `alimentaai-brain/03-n8n/workflow-export.json` (ver `03-n8n/MAPA.md`).
+3. Antes de commitar (PowerShell), varrer **todos** os JSON novos ou alterados:
 
 ```powershell
-Select-String -Path workflow-export.json -Pattern 'sk-|api_key|token' -CaseSensitive:$false
+Get-ChildItem -Filter *.json | ForEach-Object {
+  Select-String -Path $_.FullName -Pattern 'sk-|api_key|token' -CaseSensitive:$false
+}
 ```
 
-Se aparecer correspondência suspeita, rever o ficheiro antes do commit.
+Se aparecer correspondência suspeita, rever antes do commit.
 
 4. Commit sugerido: `feat(workflow): descrição curta no imperativo`
 
-5. No Brain, atualizar `03-n8n/MAPA.md` / `CONTEXTO.md` quando o fluxo mudar (`docs(n8n): ...`).
+5. No Brain, atualizar `03-n8n/MAPA.md` / `CONTEXTO.md` / `STACK.md` quando o fluxo mudar (`docs(n8n): ...`).
 
 ## 5. Brain — contextos gerados (`99-contexto-llm`)
 
